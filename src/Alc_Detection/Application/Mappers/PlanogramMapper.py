@@ -51,6 +51,7 @@ class PlanogramMapper:
                          product_count=product_count,
                          author=author,
                          create_date=db_model.upload_date,
+                         img_src=db_model.img_src,
                          approver=approver,
                          approval_date=db_model.approval_date)
             
@@ -79,6 +80,7 @@ class PlanogramMapper:
             shelving_planogram_order_id = assignment_id,
             author_id = domain_model.author.id,
             upload_date = domain_model.create_date,
+            img_src = domain_model.img_src,
             products = planogram_products
         )
         return planogram

@@ -14,6 +14,7 @@ class Planogram:
                  product_count: dict[Product, int],
                  author: Person,
                  create_date: datetime,
+                 img_src: str=None,
                  id: UUID=None,
                  approver: Person=None,
                  approval_date: datetime=None):        
@@ -25,6 +26,7 @@ class Planogram:
         self.product_count = product_count 
         self.approver = approver
         self.approval_date = approval_date
+        self.img_src = img_src
         
     def get_need_product_count(self, product: Product):
         return self.product_count[product]

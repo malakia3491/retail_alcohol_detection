@@ -1,5 +1,7 @@
 from datetime import datetime
 
+from Alc_Detection.Domain.Shelf.DeviationManagment.EmptyDeviation import EmptyDeviation
+from Alc_Detection.Domain.Shelf.DeviationManagment.IncongruityDeviation import incongruityDeviation
 from Alc_Detection.Domain.Shelf.Planogram import Planogram
 from Alc_Detection.Domain.Store.Shelving import Shelving
 from Alc_Detection.Domain.Shelf.ProductMatrix.ProductMatrix import ProductMatrix
@@ -18,6 +20,8 @@ class Realogram:
         self._product_matrix = product_matrix
         self._planogram = planogram 
         self._accordance = self._compute_accordance()
+        self._compute_empties()
+        self._compute_inconsistencies()
         
     @property
     def create_date(self) -> datetime:
@@ -30,7 +34,7 @@ class Realogram:
     @property
     def planogram(self) -> Planogram:
         return self._planogram
-    
+
     @property
     def shelving(self) -> Shelving:
         return self._planogram.shelving
@@ -65,23 +69,39 @@ class Realogram:
                 else: r_box.is_incorrect_position = True
         return accordance_count / all_boxes_count * 100
     
-    @property
-    def empties(self) -> list[ProductBox]:
-        boxes = []
+    def _compute_empties(self):
+        deviations = []
         for _, shelf in self.product_matrix:
             for box in shelf.boxes:
                 if box.is_empty:
-                    boxes.append(box)
-        return boxes
+                    deviations.append(EmptyDeviation(
+                        product_box=box                                                
+                    ))
+        self._empties = deviations
+    
+    def _compute_inconsistencies(self):
+        deviations = []
+        r_matrix = self.product_matrix
+        p_matrix = self.planogram.product_matrix
+        for _, r_shelf, _, p_shelf in zip(r_matrix, p_matrix):
+            r_boxes = r_shelf.boxes
+            p_boxes = p_shelf.boxes
+            for r_box, p_box in zip(r_boxes, p_boxes):
+                if not r_box.is_empty and r_box.product != p_box.product:
+                    r_box.is_incorrect_position = True
+                    deviations.append(incongruityDeviation(
+                        product_box=r_box,
+                        right_product=p_box.product,
+                    ))
+        self._inconsistencies = deviations
     
     @property
-    def inconsistencies(self) -> list[ProductBox]:
-        boxes = []
-        for _, shelf in self.product_matrix:
-            for box in shelf.boxes:
-                if box.is_incorrect_position:
-                    boxes.append(box)
-        return boxes
+    def empties(self) -> list[EmptyDeviation]:
+        return self._empties
+    
+    @property
+    def inconsistencies(self) -> list[incongruityDeviation]:
+        return self._inconsistencies
     
     @property
     def deviation_count(self) -> int:

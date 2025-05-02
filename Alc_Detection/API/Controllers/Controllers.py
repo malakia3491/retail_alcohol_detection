@@ -1,3 +1,0 @@
-from Alc_Detection.API.Controllers.ShelfController import ShelfController
-from Alc_Detection.API.Controllers.StoreContoller import StoreController
-from Alc_Detection.API.Controllers.TelegramController import TelegramBotContoller

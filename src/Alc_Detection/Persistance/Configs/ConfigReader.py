@@ -37,3 +37,19 @@ class IniConfigReader(ConfigReader):
             return Path(path)
         except Exception as ex:
             raise ex
+        
+    def get_tg_api_key(self) -> str:
+        try:
+            self.config.read(self.path_to_config)
+            token = self.config["Telegram"]["API_TOKEN"]
+            return token 
+        except Exception as ex:
+            raise ex
+        
+    def get_webhook_url(self) -> str:
+        try:
+            self.config.read(self.path_to_config)
+            url_path = self.config["Telegram"]["WEBHOOK_URL"]
+            return url_path 
+        except Exception as ex:
+            raise ex

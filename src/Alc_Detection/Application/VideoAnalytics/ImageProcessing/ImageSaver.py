@@ -1,23 +1,96 @@
-import os
-from pathlib import Path
-import uuid
-from Alc_Detection.Domain.Shelf.Realogram import Realogram
 import cv2
+import os
 import torch
+import uuid
 import numpy as np
 
-from Alc_Detection.Application.Requests.Models import Product
+from pathlib import Path
+
+from Alc_Detection.Domain.Shelf.Planogram import Planogram
+from Alc_Detection.Domain.Shelf.Realogram import Realogram
+from Alc_Detection.Domain.Store.Product import Product
 
 class ImageSaver:
     def __init__(self,
                  product_crop_save_dir: str,
-                 realogram_save_dir: str
+                 realogram_save_dir: str,
+                 planogram_save_dir: str=None
     ):
         self._path_dict: dict[str, str] = {
             Product.__name__:  product_crop_save_dir,
-            Realogram.__name__: realogram_save_dir
+            Realogram.__name__: realogram_save_dir,
+            Planogram.__name__: planogram_save_dir,
         } 
         
+    def get_path(self, save_dir, obj_type):
+        try:
+            return ""
+        except Exception as ex:
+            raise ex
+    
+    def save_(self, image, save_dir: str, obj_type: type, file_ext: str = ".jpg") -> str:
+            """
+            Сохраняет изображение (тензор, PIL.Image, numpy.ndarray) в указанную директорию.
+            
+            :param image: Изображение для сохранения (torch.Tensor, PIL.Image, np.ndarray)
+            :param save_dir: Поддиректория внутри базового пути для типа объекта
+            :param obj_type: Тип объекта (Product, Realogram, Planogram)
+            :param file_ext: Расширение файла (по умолчанию .jpg)
+            :return: Полный путь к сохраненному файлу
+            """
+            try:
+                # Проверка типа объекта
+                obj_type_name = obj_type.__name__
+                if obj_type_name not in self._path_dict:
+                    raise ValueError(f"Тип объекта {obj_type_name} не поддерживается")
+
+                # Получение базового пути и создание директории
+                base_path = self._path_dict[obj_type_name]
+                full_save_dir = os.path.join(base_path, save_dir)
+                Path(full_save_dir).mkdir(parents=True, exist_ok=True)
+                
+                # Проверка прав на запись
+                if not os.access(full_save_dir, os.W_OK):
+                    raise PermissionError(f"Нет доступа к директории: {full_save_dir}")
+
+                # Валидация изображения
+                if image is None:
+                    raise ValueError("Изображение не может быть None")
+                    
+                # Определение расширения файла
+                file_ext = file_ext.lower()
+                if file_ext not in {".jpg", ".jpeg", ".png"}:
+                    file_ext = ".jpg"
+
+                # Генерация имени файла
+                file_name = f"{uuid.uuid4()}{file_ext}"
+                save_path = os.path.join(full_save_dir, file_name)
+
+                # Сохранение в зависимости от типа
+                if isinstance(image, torch.Tensor):
+                    self.save_tensor_as_image(image, save_path)
+                elif isinstance(image, Image.Image):
+                    image.save(save_path)
+                elif isinstance(image, np.ndarray):
+                    cv2.imwrite(save_path, image)
+                else:
+                    raise TypeError(f"Неподдерживаемый тип изображения: {type(image)}")
+
+                # Проверка успешности сохранения
+                if not os.path.exists(save_path):
+                    raise FileNotFoundError(f"Файл не создан: {save_path}")
+
+                return save_path
+
+            except Exception as ex:
+                error_msg = (
+                    f"Ошибка сохранения: {ex}\n"
+                    f"Путь: {save_path}\n"
+                    f"Тип объекта: {obj_type_name}\n"
+                    f"Тип изображения: {type(image)}"
+                )
+                raise type(ex)(error_msg) from ex
+    
     def save(self, image_file, image, save_dir, obj_type):
         try:
             obj_type_name = obj_type.__name__

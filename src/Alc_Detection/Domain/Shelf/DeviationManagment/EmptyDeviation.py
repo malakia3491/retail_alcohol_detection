@@ -9,7 +9,7 @@ class EmptyDeviation(Deviation):
     def __init__(
         self,
         product_box: ProductBox,
-        responsible_employees: list[Person],
+        responsible_employees: list[Person]=[],
         elimination_time: time=None,
     ):
         super().__init__(
@@ -17,8 +17,8 @@ class EmptyDeviation(Deviation):
             elimination_time=elimination_time,
             responsible_employees=responsible_employees
         )
-        self._is_enough_product=True
-        
+        self._is_enough_product=True    
+    
     @property
     def is_enough_product(self):
         return self._is_enough_product
@@ -43,3 +43,10 @@ class EmptyDeviation(Deviation):
         if not self.is_enough_product:
             pass
         super().add_responsible_employees(person)
+        
+    def __eq__(self, value):
+        return isinstance(value, EmptyDeviation) and \
+               self.position == value.position
+               
+    def __str__(self):
+        return f"{self.product}"

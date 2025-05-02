@@ -1,6 +1,0 @@
-from Alc_Detection.Application.VideoAnalytics.ShelfService import ShelfService
-from Alc_Detection.Application.VideoAnalytics.Classification.Services.BottleClassifierService import BottleClassifierService
-from Alc_Detection.Application.VideoAnalytics.Detection.Services.BottleModelDetectionService import BottleModelDetectionService
-from Alc_Detection.Application.VideoAnalytics.Detection.Services.PersonDetectionService import PersonDetectionService
-from Alc_Detection.Application.VideoAnalytics.ImageProcessing.ImagePreprocessor import ImagePreprocessor
-from Alc_Detection.Application.VideoAnalytics.ModelLoading.ModelLoader import ModelLoader

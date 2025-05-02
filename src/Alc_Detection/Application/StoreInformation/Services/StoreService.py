@@ -1,5 +1,6 @@
 import traceback
 from datetime import datetime
+from Alc_Detection.Application.ImageGeneration.ProductMatrixImageGenerator import ProductMatrixImageGenerator
 from fastapi import HTTPException, status
 
 from Alc_Detection.Domain.Entities import *
@@ -24,6 +25,7 @@ from Alc_Detection.Persistance.Repositories.Repositories import *
 
 class StoreService:
     def __init__(self,
+                 image_generator: ProductMatrixImageGenerator,
                  store_repository: StoreRepository,
                  shelving_repository: ShelvingRepository,
                  planogram_order_repository: PlanogramOrderRepository,
@@ -31,6 +33,7 @@ class StoreService:
                  product_repository: ProductRepository,
                  planogram_order_mapper: PlanogramOrderMapper,
                  product_matrix_mapper: ProductMatrixMapper):
+        self._image_generator = image_generator
         self._store_repository = store_repository
         self._shelving_repository = shelving_repository
         self._planogram_order_repository = planogram_order_repository
@@ -225,7 +228,7 @@ class StoreService:
             products = await self._product_repository.get(*[product.product_id for product in planogram_matrix.products])
             product_matrix, product_count = \
                 self._product_matrix_mapper.map_response_to_domain_model(request_model=planogram_matrix,
-                                                                         products=products)              
+                                                                         products=products)        
             planogram = Planogram(
                 shelving=shelving,
                 author=author,
@@ -235,6 +238,11 @@ class StoreService:
             )          
             await self._planogram_order_repository.add_planogram(order_id=order.id, 
                                                                  new_planogram=planogram)
+            planogram.img_src = self._image_generator.generate(
+                id_name=planogram.id,
+                product_matrix=planogram.product_matrix,
+                obj_type=Planogram
+            )                  
         except Exception as ex:
             print(traceback.format_exc())
             raise HTTPException(

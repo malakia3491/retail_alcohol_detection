@@ -8,7 +8,7 @@ class Deviation:
     def __init__(
         self,
         product_box: ProductBox,
-        responsible_employees: list[Person],
+        responsible_employees: list[Person]=[],
         elimination_time: time=None,
     ):
         self._product_box = product_box
@@ -20,6 +20,10 @@ class Deviation:
     @property
     def product(self):
         return self._product_box.product
+    
+    @property 
+    def position(self):
+        return self._product_box.position
     
     @property
     def send_time(self):
@@ -68,3 +72,8 @@ class Deviation:
     def add_responsible_employees(self, person: Person):
         if not person in self._responsible_employees:
             self._responsible_employees.append(person)
+            
+    def __eq__(self, value):
+        return isinstance(value, Deviation) and \
+               self.position == value.position
+               

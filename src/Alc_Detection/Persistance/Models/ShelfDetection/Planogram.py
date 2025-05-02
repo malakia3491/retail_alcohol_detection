@@ -1,4 +1,4 @@
-from sqlalchemy import  UUID, Column, ForeignKey, DateTime
+from sqlalchemy import  UUID, Column, ForeignKey, DateTime, String
 from sqlalchemy.orm import relationship
 
 from Alc_Detection.Persistance.Models.BaseModel import BaseModel
@@ -10,6 +10,7 @@ class Planogram(BaseModel):
     author_id = Column(UUID(as_uuid=True), ForeignKey("persons.id"))
     approver_id = Column(UUID(as_uuid=True), ForeignKey("persons.id"), nullable=True)
     upload_date = Column(DateTime)
+    img_src = Column(String)
     approval_date = Column(DateTime, nullable=True)
     
     shelving_planogram_order = relationship("ShelvingPlanogramOrder", back_populates="planograms", lazy='selectin')

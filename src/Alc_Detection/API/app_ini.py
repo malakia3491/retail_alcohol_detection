@@ -3,6 +3,8 @@ from fastapi import FastAPI
 
 from Alc_Detection.API.Controllers.Controllers import *
 
+from Alc_Detection.Application.Notification.start_up import TelegramInitializer
+from Alc_Detection.Application.ImageGeneration.ProductMatrixImageGenerator import ProductMatrixImageGenerator
 from Alc_Detection.Application.IncidentManagement.Interfaces.Messenger import Messenger
 from Alc_Detection.Application.IncidentManagement.Services.IncidentManager import IncidentManager
 from Alc_Detection.Application.Mappers.Mappers import *
@@ -25,6 +27,7 @@ class ModulesInitializer:
         self.config_reader = IniConfigReader(
                     path_to_config="C:\\Users\\pyatk\\Desktop\\Nikita\\source\\retail_alcohol_detection\\src\\Alc_Detection\\Persistance\\Configs\\config.ini"
         )
+        self.tg_starter = TelegramInitializer(self.config_reader)
         self.db_starter = DbInitializer(self.config_reader)
         self.controllers_dict = {}
     
@@ -54,21 +57,36 @@ class ModulesInitializer:
                                     shelving_mapper=shelving_mapper,  
                                     planogram_mapper=planogram_mapper, 
                                     planogram_order_mapper=planogram_order_mapper,
-                                    store_mapper=store_mapper)        
-        #self._initialize_notification_module()
-        incident_manager = self._initialize_incident_management(store_service=store_service,
-                                                                store_rep=store_repository,
-                                                                messanger=None)
-        store_service = self._initialize_store_module(store_repository=store_repository,
-                                      shelving_repository=shelving_repository,
-                                      person_repository=person_repository,
-                                      planogram_order_repository=planogram_order_repository,
-                                      product_repository=product_repository,
-                                      product_matrix_mapper=product_matrix_mapper,
-                                      planogram_order_mapper=planogram_order_mapper)
-        await self._initialize_videoanalytics(store_service=store_service,
-                                             product_repository=product_repository,
-                                             embedding_model_repository=embedding_model_repository)
+                                    store_mapper=store_mapper)
+        
+        image_saver = ImageSaver(product_crop_save_dir=self.config_reader.get_save_dir_path("product_crops"),
+                                 realogram_save_dir=self.config_reader.get_save_dir_path("realogram_snapshots"))
+        image_generator = ProductMatrixImageGenerator(image_saver=image_saver)
+                
+        await self._initialize_notification_module()
+        
+        incident_manager = self._initialize_incident_management(
+            image_generator=image_generator,
+            store_service=store_service,
+            store_rep=store_repository,
+            messanger=None)
+        
+        store_service = self._initialize_store_module(
+            store_repository=store_repository,
+            shelving_repository=shelving_repository,
+            person_repository=person_repository,
+            planogram_order_repository=planogram_order_repository,
+            product_repository=product_repository,
+            product_matrix_mapper=product_matrix_mapper,
+            planogram_order_mapper=planogram_order_mapper)
+        
+        await self._initialize_videoanalytics(
+            image_saver=image_saver,
+            store_service=store_service,
+            incident_management_service=incident_manager,
+            product_repository=product_repository,
+            embedding_model_repository=embedding_model_repository)
+        
         self._include_routers(self.controllers_dict)
     
     async def _initialize_db(self,
@@ -106,12 +124,12 @@ class ModulesInitializer:
         return store_repository, shelving_repository, planogram_order_repository, person_repository, product_repository, embedding_model_repository
     
     async def _initialize_videoanalytics(self,
+                                         image_saver: ImageSaver,
+                                         incident_management_service: IncidentManager,
                                          store_service: StoreService,
                                          product_repository: ProductRepository,
                                          embedding_model_repository: EmbeddingModelRepository):
         device = "cuda:0" if torch.cuda.is_available() else "cpu"
-        image_saver = ImageSaver(product_crop_save_dir=self.config_reader.get_save_dir_path("product_crops"),
-                                 realogram_save_dir=self.config_reader.get_save_dir_path("realogram_snapshots"))
         modelLoader = ModelLoader(device=device,
                                   config_reader=self.config_reader)
         imagePreprocessor = ImagePreprocessor(device=device,
@@ -124,8 +142,7 @@ class ModulesInitializer:
                                                             classifier=modelLoader.get_bottle_classifier(),
                                                             siamese_model=modelLoader.bottle_embedding_model("standard"),
                                                             cache=InMemoryCache(),
-                                                            device=device)
-        incident_management_service = None        
+                                                            device=device)      
         shelfService = ShelfService(preprocessor=imagePreprocessor,
                                     person_detector=person_detector_service,
                                     bottle_detector=bottles_detector_service,
@@ -151,8 +168,13 @@ class ModulesInitializer:
                                            messanger=messanger)
         return incident_manager
     
-    def _initialize_notification_module(self):
-        pass
+    async def _initialize_notification_module(self):
+        messanger = await self.tg_starter.initialize()
+        controller = TelegramBotContoller(
+            api_token=messanger._api_token,
+            dispetcher=messanger.dispatcher
+        )
+        self.controllers_dict["telegram_bot_controller"] = (controller, ("/webhook", "telegram bot"))
     
     def _initialize_store_module(self,
                                  store_repository: StoreRepository,
@@ -161,14 +183,16 @@ class ModulesInitializer:
                                  planogram_order_repository: PlanogramOrderRepository,
                                  product_repository: ProductRepository,
                                  product_matrix_mapper: ProductMatrixMapper,
-                                 planogram_order_mapper: PlanogramOrderMapper):   
+                                 planogram_order_mapper: PlanogramOrderMapper,
+                                 image_generator: ProductMatrixImageGenerator):   
         store_service = StoreService(store_repository=store_repository,
                                      shelving_repository=shelving_repository,
                                      person_repository=person_repository,
                                      planogram_order_repository=planogram_order_repository,
                                      product_repository=product_repository,
                                      planogram_order_mapper=planogram_order_mapper,
-                                     product_matrix_mapper=product_matrix_mapper)
+                                     product_matrix_mapper=product_matrix_mapper,
+                                     image_generator=image_generator)
         controller = StoreController(storeService=store_service)
         self.controllers_dict["store_controller"] = (controller, ("/retail", "retail"))
         return store_service

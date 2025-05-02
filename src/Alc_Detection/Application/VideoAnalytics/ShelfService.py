@@ -208,8 +208,7 @@ class ShelfService:
             for b in boxes
         ]
         centers = np.array([p.center.y for p in product_boxes]).reshape(-1, 1)
-        thresh = self._compute_distance_threshold(centers.flatten())
-        
+        thresh = self._compute_distance_threshold(centers.flatten())        
         clustering = AgglomerativeClustering(
             distance_threshold=thresh,
             n_clusters=None
@@ -232,7 +231,9 @@ class ShelfService:
             shelf_idx: Shelf(groups[lbl])
             for shelf_idx, lbl in enumerate(sorted_clusters)
         }
-        return ProductMatrix(shelves=shelves)
+        matrix = ProductMatrix(shelves=shelves)
+        matrix.define_positions()        
+        return matrix
     
     def _compute_distance_threshold(self, y_coords: np.ndarray[int]) -> float:
         """

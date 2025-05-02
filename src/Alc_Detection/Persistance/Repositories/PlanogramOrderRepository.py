@@ -58,7 +58,11 @@ class PlanogramOrderRepository:
                 orders.append(order)
         return orders   
             
-    async def add_planogram(self, order_id: UUID, new_planogram: Planogram):
+    async def add_planogram(
+        self,
+        order_id: UUID,
+        new_planogram: Planogram
+    ):
         assignment = await self.get_shelving_assignment(new_planogram.shelving.id, order_id)
         order: PlanogramOrder = self._cache.get(order_id)
         planogram = self._planogram_mapper.map_to_db_model(domain_model=new_planogram,
@@ -70,10 +74,11 @@ class PlanogramOrderRepository:
         new_planogram.id = planogram.id
         order.add_planogram(shelving=new_planogram.shelving, planogram=new_planogram)  
             
-    async def update_planogram(self,
-                               order_id: UUID,
-                               planogram_id: UUID,
-                               data: dict[str, Any]
+    async def update_planogram(
+        self,
+        order_id: UUID,
+        planogram_id: UUID,
+        data: dict[str, Any]
     ) -> int:
         obj = self._cache.get(order_id)
         if obj:

@@ -2,7 +2,12 @@ from Alc_Detection.Domain.Store.Product import Product
 from Alc_Detection.Domain.Shelf.ProductMatrix.Point import Point
 
 class ProductBox:
-    def __init__(self, id=None, product: Product=Product(), is_empty=False):
+    def __init__(
+        self,
+        id=None,
+        product: Product=Product(),
+        is_empty=False
+    ):
         from Alc_Detection.Domain.Shelf.ProductMatrix.ProductBoxStates.InitState import InitState
         self.set_state(InitState())
         self.id = id

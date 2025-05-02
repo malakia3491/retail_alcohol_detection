@@ -1,6 +1,0 @@
-from Alc_Detection.Application.Mappers.PersonMapper import PersonMapper
-from Alc_Detection.Application.Mappers.PlanogramMapper import PlanogramMapper
-from Alc_Detection.Application.Mappers.PlanogramOrderMapper import PlanogramOrderMapper
-from Alc_Detection.Application.Mappers.ShelvingMapper import ShelvingMapper
-from Alc_Detection.Application.Mappers.ProductMapper import ProductMapper 
-from Alc_Detection.Application.Mappers.StoreMapper import StoreMapper 
