@@ -1,0 +1,95 @@
+import traceback
+from typing import List
+from uuid import UUID
+from fastapi import APIRouter, File, Form, HTTPException, UploadFile, status
+from fastapi.responses import JSONResponse
+
+from Alc_Detection.Application.Requests.Models import CalibrationBoxesResponse
+from Alc_Detection.Application.VideoAnalytics.ShelfService import ShelfService
+from Alc_Detection.Application.Requests.Requests import AddCalibrationBoxesRequest
+
+class ShelfController:
+    def __init__(self, 
+                 shelfService: ShelfService):
+        self.shelfService = shelfService
+        self.router = APIRouter()
+        self._register_routes()
+
+    def _register_routes(self):
+        self.router.add_api_route("/realograms/", self.handle_shelf_image, methods=["POST"], status_code=status.HTTP_200_OK)
+        self.router.add_api_route("/calibrations/", self.calibrate_planogram, methods=["POST"], status_code=status.HTTP_200_OK)
+        self.router.add_api_route("/calibration_boxes/", self.get_calibration_boxes, methods=["POST"], status_code=status.HTTP_200_OK)
+        self.router.add_api_route("/product_images/", self.add_product_images, methods=["POST"], status_code=status.HTTP_200_OK)
+    
+    async def add_product_images(
+        self,
+        product_id: UUID = Form(...),
+        image_files: List[UploadFile] = File(...)
+    ) -> dict:
+        try:      
+            message = await self.shelfService.add_product_images(
+                product_id=product_id,
+                image_files=image_files
+            )         
+            return {"message": message}        
+        except HTTPException as he:
+            raise he        
+        except Exception as e:
+            traceback.print_exc() 
+            return JSONResponse(
+                content={"message": f"Internal error: {str(e)}"},
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )       
+    
+    async def handle_shelf_image(
+        self,
+        image_file: UploadFile = File(...),
+        shelving_id: UUID = Form(...),
+        store_id: UUID = Form(...)
+    ) -> dict:
+        try:      
+            message = await self.shelfService.handle_shelf_image(
+                image_file=image_file,
+                shelving_id=shelving_id,
+                store_id=store_id
+            )           
+            return {"message": message}        
+        except HTTPException as he:
+            raise he        
+        except Exception as e:
+            traceback.print_exc() 
+            return JSONResponse(
+                content={"message": f"Internal error: {str(e)}"},
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+            
+    async def get_calibration_boxes(self,
+                                    image_file: UploadFile = File(...)
+    ) -> CalibrationBoxesResponse:
+        try:      
+            response = await self.shelfService.get_calibration_boxes(image_file=image_file)           
+            return response        
+        except HTTPException as he:
+            raise he        
+        except Exception as e:
+            traceback.print_exc() 
+            return JSONResponse(
+                content={"message": f"Internal error: {str(e)}"},
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )    
+    
+    async def calibrate_planogram(
+        self,
+        request: AddCalibrationBoxesRequest
+    ) -> dict:
+        try:      
+            message = await self.shelfService.calibrate_planogram(request)
+            return {"message": message}        
+        except HTTPException as he:
+            raise he        
+        except Exception as e:
+            traceback.print_exc() 
+            return JSONResponse(
+                content={"message": f"Internal error: {str(e)}"},
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
