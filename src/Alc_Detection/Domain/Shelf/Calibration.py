@@ -1,7 +1,7 @@
 from datetime import datetime
 
 from Alc_Detection.Application.Requests.Models import Planogram
-from Alc_Detection.Domain.Store.Person import Person
+from Alc_Detection.Domain.Store.PersonManagment.Person import Person
 from Alc_Detection.Domain.Shelf.ProductMatrix.CalibrationBox import CalibrationBox
 
 class Calibration:

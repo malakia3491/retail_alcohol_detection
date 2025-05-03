@@ -25,6 +25,12 @@ class Product:
         self._name = value
 
     @property
+    def image(self) -> Image:
+        if len(self._images) == 0:
+            return None
+        return self._images[0]
+
+    @property
     def is_classificated(self):
         return len(self._images) != 0
 

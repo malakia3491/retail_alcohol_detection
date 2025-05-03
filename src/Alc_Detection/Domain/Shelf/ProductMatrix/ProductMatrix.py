@@ -30,10 +30,11 @@ class ProductMatrix:
             raise ValueError("Количество переданных полок не соответствует заданному числу рядов")
         self._shelves = {idx: shelf for idx, shelf in shelves.items()}
 
-    def define_positions(self):
+    def define_positions(self) -> 'ProductMatrix':
         for row_id, shelf in self:
             for column_id, box in enumerate(shelf.boxes):
                 box.load_positions(Point(row_id, column_id))
+        return self
     
     @property
     def len_shelves(self) -> int:

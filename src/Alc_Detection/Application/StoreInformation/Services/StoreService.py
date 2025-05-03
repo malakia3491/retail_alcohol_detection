@@ -1,3 +1,4 @@
+import math
 import traceback
 from datetime import datetime
 from Alc_Detection.Application.ImageGeneration.ProductMatrixImageGenerator import ProductMatrixImageGenerator
@@ -7,6 +8,8 @@ from Alc_Detection.Domain.Entities import *
 from Alc_Detection.Domain.Exceptions.Exceptions import ApprovePlanogramInDeclinedOrder, InvalidCalibrationBoxes
 from Alc_Detection.Domain.Shelf.Calibration import Calibration
 from Alc_Detection.Domain.Shelf.ProductMatrix.CalibrationBox import CalibrationBox
+from Alc_Detection.Domain.Store.PersonManagment.Post import Post
+from Alc_Detection.Domain.Store.PersonManagment.Shift import Shift
 from Alc_Detection.Domain.Store.PlanogramOrder import PlanogramOrder
 from Alc_Detection.Application.Extentions.Utils import between
 from Alc_Detection.Application.StoreInformation.Exceptions.Exceptions import \
@@ -15,12 +18,13 @@ from Alc_Detection.Application.StoreInformation.Exceptions.Exceptions import \
      PersonIsNotWorkerAlready, PlanogramOrderIsNotResolved, ShelvingIsNotAssigned,
      ShelvingPlanogramIsAgreed)
 from Alc_Detection.Application.Requests.Requests import \
-(AddPersonsRequest, AddProductsRequest, AddShelvingsRequest,
+(AddPersonsRequest, AddPostsRequest, AddProductsRequest, AddShelvingsRequest, AddShiftsRequest,
  AddStoresRequest, ApprovePlanogramRequest, DismissPersonRequest,
- ProductMatrix as ProductMatrixModel, UpdatePersonRequest, UpdatePersonsRequest)
+ ProductMatrix as ProductMatrixModel, Shelving as ShelvingModel, Product as ProductModel)
 from Alc_Detection.Application.Mappers.PlanogramOrderMapper import PlanogramOrderMapper
 from Alc_Detection.Application.Mappers.ProductMatrixMapper import ProductMatrixMapper
-from Alc_Detection.Application.Requests.Models import PlanogramOrdersResponse
+from Alc_Detection.Application.Requests.Models import PlanogramOrdersPageResponse, PlanogramOrdersResponse, ProductsResponse, ShelvingsResponse
+from Alc_Detection.Persistance.Repositories.PostRepository import PostRepository
 from Alc_Detection.Persistance.Repositories.Repositories import *
 
 class StoreService:
@@ -31,8 +35,10 @@ class StoreService:
                  planogram_order_repository: PlanogramOrderRepository,
                  person_repository: PersonRepository,
                  product_repository: ProductRepository,
+                 post_repository: PostRepository,
                  planogram_order_mapper: PlanogramOrderMapper,
-                 product_matrix_mapper: ProductMatrixMapper):
+                 product_matrix_mapper: ProductMatrixMapper,):
+        self._post_repository = post_repository
         self._image_generator = image_generator
         self._store_repository = store_repository
         self._shelving_repository = shelving_repository
@@ -42,19 +48,130 @@ class StoreService:
         self._product_matrix_mapper = product_matrix_mapper
         self._planogram_order_mapper = planogram_order_mapper
     
-    async def get_actual_store_shift(
-        self,
-        store: Store,
-        date: datetime
-    ) -> None:
-        raise NotImplementedError()
-    
     async def get_actual_product_count(
         self,
         store: Store,
         product: Product
     ) -> int:
         raise NotImplementedError()
+    
+    async def get_shelving(
+        self,
+        shelving_id: str
+    ) -> ShelvingsResponse:
+        try:
+            shelving = await self._shelving_repository.get(shelving_id)
+            if shelving is None:
+                raise InvalidObjectId()
+            response = ShelvingsResponse(
+                shelvings=[ShelvingModel(
+                    id=shelving.id,
+                    shelves_count=shelving.shelves_count,
+                    name=shelving.name)]
+            )
+            return response
+        except Exception as ex:
+            print(traceback.format_exc())
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=ex.__str__())
+    
+    async def get_products(self) -> ProductsResponse:
+        try:
+            products = await self._product_repository.get_all()
+            response = ProductsResponse(
+                products=[ProductModel(
+                    id=product.id,
+                    name=product.name,
+                   )
+                    for product in products]
+            )
+            return response
+        except Exception as ex:
+            print(traceback.format_exc())
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=ex.__str__())
+            
+    async def get_shelvings(self) -> ShelvingsResponse:
+        try:
+            shelvings = await self._shelving_repository.get_all()
+            response = ShelvingsResponse(
+                shelvings=[ShelvingModel(
+                    id=shelving.id,
+                    shelves_count=shelving.shelves_count,
+                    name=shelving.name)
+                           for shelving in shelvings])
+            return response
+        except Exception as ex:
+            print(traceback.format_exc())
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=ex.__str__())
+    
+    async def get_page_not_resolved_planogram_orders(
+        self,
+        page: int,
+        page_size: int
+    ) -> PlanogramOrdersPageResponse:
+        try:
+            orders = await self._planogram_order_repository.get_not_resolved_orders()        
+            start = page * page_size
+            end = start + page_size
+            result = []
+            for order in orders[start:end]:
+                response = self._planogram_order_mapper.map_to_response_model(order)
+                result.append(response)
+            response = PlanogramOrdersPageResponse(
+                planogram_orders=result,
+                page=page,
+                page_size=page_size,
+                total_count= math.ceil(len(orders) / page_size)
+            )
+            return response
+        except Exception as ex:
+            print(traceback.format_exc())
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=ex.__str__())
+    
+    async def get_page_planogram_orders(
+        self,
+        page: int,
+        page_size: int
+    ) -> PlanogramOrdersPageResponse:
+        try:
+            orders = await self._planogram_order_repository.get_all()
+            start = page * page_size
+            end = start + page_size
+            result = []
+            for order in orders[start:end]:
+                response = self._planogram_order_mapper.map_to_response_model(order)
+                result.append(response)
+            response = PlanogramOrdersPageResponse(
+                planogram_orders=result,
+                page=page,
+                page_size=page_size,
+                total_count= math.ceil(len(orders) / page_size)
+            )
+            return response
+        except Exception as ex:
+            print(traceback.format_exc())
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=ex.__str__())
+    
+    async def get_planogram_order(self, order_id: str) -> PlanogramOrder:
+        try:
+            order = await self._planogram_order_repository.get(order_id)
+            if order is None:
+                raise InvalidObjectId()
+            response = self._planogram_order_mapper.map_to_response_model(order)
+            return response
+        except ValueError as ex:
+            raise InvalidObjectId()
+        except Exception as ex:
+            raise ex
     
     async def get_calibrated_planogram(self, store_id: str, shelving_id: str) -> Planogram:
         try:
@@ -160,20 +277,45 @@ class StoreService:
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail=ex.__str__())     
+ 
+    async def add_posts(self, request: AddPostsRequest) -> str:
+        try:
+            posts = [Post(name=post.name,
+                          is_regular=post.is_regular,
+                          is_administrative=post.is_administrative)
+                     for post in request.posts]
+            count_added_records = await self._post_repository.add(*posts)
+            return f"Succsessfully. Added {count_added_records} records."
+        except Exception as ex:
+            print(traceback.format_exc())
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=ex.__str__())     
     
+    async def add_shifts(self, request: AddShiftsRequest) -> str:
+        raise NotImplementedError()
+        # try:
+        #     shifts = []
+        #     for request_shift in request.shifts:
+        #         shift = Shift(
+        #             name=,
+        #             work_time=,
+        #             break_time=,
+                    
+        #         )
+        #     count_added_records = await self._store_repository.add_shift()
+        #     return f"Succsessfully. Added {count_added_records} records."
+        # except Exception as ex:
+        #     print(traceback.format_exc())
+        #     raise HTTPException(
+        #         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        #         detail=ex.__str__())  
+       
     async def add_persons(self, request: AddPersonsRequest) -> str:
         try:
             persons = []
             for request_person in request.persons:
-                store = None
-                if not request_person.store_id  is None:                    
-                    store = await self._store_repository.get(request_person.store_id)                                        
-                    person = Person(name=request_person.name,
-                                    store=store,
-                                    telegram_id=request_person.telegram_id)
-                    store.add_person(person)
-                else:
-                    person = Person(name=request_person.name,
+                person = Person(name=request_person.name,
                                     telegram_id=request_person.telegram_id)
                 persons.append(person)
             count_added_records = await self._person_repository.add(*persons)

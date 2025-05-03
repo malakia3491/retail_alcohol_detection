@@ -1,8 +1,10 @@
+from datetime import datetime
 from Alc_Detection.Application.Requests.Models import Person
 from Alc_Detection.Domain.Shelf.DeviationManagment.Incident import Incident
 from Alc_Detection.Domain.Shelf.Calibration import Calibration
 from Alc_Detection.Domain.Shelf.Planogram import Planogram
 from Alc_Detection.Domain.Shelf.Realogram import Realogram
+from Alc_Detection.Domain.Store.PersonManagment.Shift import Shift
 from Alc_Detection.Domain.Store.Shelving import Shelving
 
 class Store:
@@ -11,15 +13,13 @@ class Store:
                  calibrations:list[Calibration]=[],
                  realograms:list[Realogram]=[],
                  incidents:list[Incident]=[],
-                 id=None,
-                 shifts=[],
-                 persons=[]):
+                 shifts:list[Shift]=[],
+                 id=None):
         self.id = id
         self.name = name 
         self._realograms = sorted(realograms, key=lambda r: r.create_date, reverse=True)
         self._incidents = sorted(incidents, key=lambda i: i.send_time, reverse=True)
         self._shifts = shifts
-        self._persons = persons
         self._calibrations = calibrations
 
     @property
@@ -28,7 +28,7 @@ class Store:
     
     @property
     def employee(self) -> list[Person]:
-        return self._persons
+        raise NotImplementedError()
     
     @property
     def realograms(self) -> list[Realogram]:
@@ -45,6 +45,13 @@ class Store:
             if not incident.is_resolved:
                 incidents.append(incident)
         return incidents
+    
+    @property 
+    def actual_shift(self):
+        for shift in self._shifts:
+            if shift.do_work_at(datetime.now()):
+                return shift
+        return None
     
     def get_actual_planogram_by(self, shelving: Shelving) -> Planogram:
         for calib in self.calibrations:

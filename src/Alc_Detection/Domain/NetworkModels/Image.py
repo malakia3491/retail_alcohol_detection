@@ -1,4 +1,5 @@
 import os
+import re
 import cv2
 import imghdr
 import PIL.Image
@@ -23,6 +24,13 @@ class Image:
     def model(self) -> EmbeddingNetwork:
         return self.embeddings[0].model
         
+    @property
+    def name(self) -> str:
+        match = re.search(r'([a-f0-9\-]{36})\\[a-f0-9\-]{36}\.jpg$', self._path, re.IGNORECASE)
+        if match:
+            return match.group(1)
+        raise ValueError("UUID not found in the image path")
+    
     @property
     def path(self) -> str:
         return self._path   

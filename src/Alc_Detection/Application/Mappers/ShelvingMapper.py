@@ -26,4 +26,5 @@ class ShelvingMapper:
         if not isinstance(domain_model, Shelving):
             raise ValueError(domain_model)
         return ShelvingResponseModel(id = domain_model.id,
+                                     shelves_count= domain_model.shelves_count,
                                      name = domain_model.name)

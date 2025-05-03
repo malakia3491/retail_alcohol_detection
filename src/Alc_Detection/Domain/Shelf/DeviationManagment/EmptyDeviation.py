@@ -1,7 +1,6 @@
 from datetime import time
 
-from Alc_Detection.Domain.Store.Person import Person
-from Alc_Detection.Domain.Shelf.Realogram import Realogram
+from Alc_Detection.Domain.Store.PersonManagment.Person import Person
 from Alc_Detection.Domain.Shelf.ProductMatrix.ProductBox import ProductBox
 from Alc_Detection.Domain.Shelf.DeviationManagment.Deviation import Deviation
 

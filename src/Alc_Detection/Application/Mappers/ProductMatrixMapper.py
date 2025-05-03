@@ -47,17 +47,19 @@ class ProductMatrixMapper:
         planogram_products = {}
         for product, count in product_count.items():
             planogram_products[product.id] = PlanogramProductResponseModel(id=None,
+                                                                           product_id=product.id,
                                                                            product=self._product_mapper.map_to_response_model(product),
                                                                            count=count) 
         shelves = [ShelfResponseModel(position=index,
                                       product_boxes=[
                                           ProductBoxResponseModel(
                                                     id=None,
+                                                    product_id=box.product.id,
                                                     planogram_product=planogram_products[box.product.id],
                                                     pos_x=box.position.x,
                                                     is_empty=box.is_empty) 
                                                     for box in shelf.boxes]) 
-                   for index, shelf in enumerate(domain_model)]
+                   for index, (_, shelf) in enumerate(domain_model)]
         product_matrix = ProductMatrixResponseModel(products=planogram_products.values(),
                                                     shelfs=shelves)        
         return product_matrix

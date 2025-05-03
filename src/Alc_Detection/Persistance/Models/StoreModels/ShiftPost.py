@@ -14,4 +14,4 @@ class ShiftPost(BaseModel):
 
     store_shift = relationship("StoreShift", back_populates="shift_posts")
     post = relationship("Post", back_populates="shift_posts")
-    shift_post_persons = relationship("ShiftPostPerson", back_populates="shift_post", cascade="all, delete-orphan")  
+    shift_post_persons = relationship("ShiftPostPerson", back_populates="shift_post", cascade="all, delete-orphan", lazy='selectin')  

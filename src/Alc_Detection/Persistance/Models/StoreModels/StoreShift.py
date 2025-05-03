@@ -17,10 +17,8 @@ class StoreShift(BaseModel):
     time_break_start = Column(Time)
     time_break_end = Column(Time)
 
-    store = relationship("Store", back_populates="store_shifts")
-    incidents = relationship("Incident", back_populates="store_shift", cascade="all, delete-orphan")
-    shift_posts = relationship("ShiftPost", back_populates="store_shift", cascade="all, delete-orphan")
+    store = relationship("Store", back_populates="store_shifts", lazy='selectin')
+    incidents = relationship("Incident", back_populates="store_shift", cascade="all, delete-orphan", lazy='selectin')
+    shift_posts = relationship("ShiftPost", back_populates="store_shift", cascade="all, delete-orphan", lazy='selectin')
     
-    plan_days = relationship("PlanSchedule", back_populates="store_shift")
-    
-    
+    schedule = relationship("PlanWorkTime", back_populates="store_shift", lazy='selectin')

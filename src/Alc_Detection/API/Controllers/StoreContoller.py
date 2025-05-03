@@ -4,9 +4,9 @@ from datetime import date, datetime
 from fastapi import APIRouter, Form, HTTPException, status
 from fastapi.responses import JSONResponse
 
-from Alc_Detection.Application.Requests.Models import PlanogramOrdersResponse
+from Alc_Detection.Application.Requests.Models import PlanogramOrder, PlanogramOrdersPageResponse, PlanogramOrdersResponse, ProductsResponse, ShelvingsResponse
 from Alc_Detection.Application.Requests.Requests import \
-(AddPersonsRequest, AddPlanogramRequest, AddProductsRequest, AddShelvingsRequest,
+(AddPersonsRequest, AddPlanogramRequest, AddPostsRequest, AddProductsRequest, AddShelvingsRequest,
  AddStoresRequest, ApprovePlanogramRequest, DismissPersonRequest, UpdatePersonRequest)
 from Alc_Detection.Application.StoreInformation.Services.StoreService import StoreService
 
@@ -63,6 +63,41 @@ class StoreController:
                                   self.unapprove_planogram,
                                   methods=["PUT"],
                                   status_code=status.HTTP_200_OK)
+        self.router.add_api_route("/posts/",
+                                  self.add_posts,
+                                  methods=["POST"],
+                                  status_code=status.HTTP_200_OK)
+        self.router.add_api_route("/shifts/",
+                                  self.add_shifts,
+                                  methods=["POST"],
+                                  status_code=status.HTTP_200_OK)
+        self.router.add_api_route("/planogram_orders/{order_id}/",
+                                  self.get_planogram_order,
+                                  methods=["GET"],
+                                  status_code=status.HTTP_200_OK)
+        self.router.add_api_route("/planogram_orders/page/{page}",
+                                  self.get_page_planogram_orders,
+                                  methods=["GET"],
+                                  status_code=status.HTTP_200_OK)
+        self.router.add_api_route("/planogram_orders/actual/page/{page}",
+                                  self.get_page_not_resolved_planogram_orders,
+                                  methods=["GET"],
+                                  status_code=status.HTTP_200_OK)
+        self.router.add_api_route("/products/",
+                                    self.get_products,
+                                    methods=["GET"],
+                                    status_code=status.HTTP_200_OK,
+                                    response_model=ProductsResponse)
+        self.router.add_api_route("/shelvings/",
+                                    self.get_shelvings,
+                                    methods=["GET"],
+                                    status_code=status.HTTP_200_OK,
+                                    response_model=ShelvingsResponse)
+        self.router.add_api_route("/shelvings/{shelving_id}/",
+                                  self.get_shelving,
+                                  methods=["GET"],
+                                  status_code=status.HTTP_200_OK,
+                                  response_model=ShelvingsResponse)
     
     async def add_planogram(self,
                             request: AddPlanogramRequest
@@ -80,6 +115,59 @@ class StoreController:
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail=ex.__str__()) 
+    
+    async def get_page_planogram_orders(
+        self,
+        page: int = 0,
+        page_size: int = Form(10)
+    ) -> PlanogramOrdersPageResponse:
+        try:      
+            response = await self.storeService.get_page_planogram_orders(
+                page=page,
+                page_size=page_size
+            )        
+            return response        
+        except HTTPException as he:
+            raise he        
+        except Exception as e:
+            return JSONResponse(
+                content={"message": f"Internal error: {str(e)}"},
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    
+    async def get_page_not_resolved_planogram_orders(
+        self,
+        page: int = 0,
+        page_size: int = 0 
+    ) -> PlanogramOrdersPageResponse:
+        try:      
+            response = await self.storeService.get_page_not_resolved_planogram_orders(
+                page=page,
+                page_size=page_size
+            )        
+            return response        
+        except HTTPException as he:
+            raise he        
+        except Exception as e:
+            return JSONResponse(
+                content={"message": f"Internal error: {str(e)}"},
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    
+    async def get_planogram_order(
+        self,
+        order_id: UUID
+    ) -> PlanogramOrder:
+        try:      
+            response = await self.storeService.get_planogram_order(
+                order_id=order_id
+            )        
+            return response        
+        except HTTPException as he:
+            raise he        
+        except Exception as e:
+            return JSONResponse(
+                content={"message": f"Internal error: {str(e)}"},
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
+    )
     
     async def get_planogram_orders(
         self,
@@ -121,6 +209,50 @@ class StoreController:
                 content={"message": f"Internal error: {str(e)}"},
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)   
 
+    async def get_shelving(
+        self,
+        shelving_id: UUID
+    ) -> ShelvingsResponse:
+        try:      
+            response = await self.storeService.get_shelving(
+                shelving_id=shelving_id
+            )        
+            return response        
+        except HTTPException as he:
+            raise he        
+        except Exception as e:
+            return JSONResponse(
+                content={"message": f"Internal error: {str(e)}"},
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
+    )
+    
+    async def get_products(
+        self
+    ) -> ProductsResponse:
+        try:      
+            response = await self.storeService.get_products()
+            return response      
+        except HTTPException as he:
+            raise he        
+        except Exception as e:
+            return JSONResponse(
+                content={"message": f"Internal error: {str(e)}"},
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    
+    async def get_shelvings(
+        self
+    ) -> ShelvingsResponse:
+        try:      
+            response = await self.storeService.get_shelvings()
+            return response      
+        except HTTPException as he:
+            raise he        
+        except Exception as e:
+            return JSONResponse(
+                content={"message": f"Internal error: {str(e)}"},
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+    
     async def add_stores(
             self,
             request: AddStoresRequest
@@ -155,6 +287,34 @@ class StoreController:
     ) -> dict:
         try:      
             message = await self.storeService.add_persons(request)
+            return {"message": message}      
+        except HTTPException as he:
+            raise he        
+        except Exception as e:
+            return JSONResponse(
+                content={"message": f"Internal error: {str(e)}"},
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    async def add_shifts(
+            self,
+            request
+    ) -> dict:
+        try:      
+            message = await self.storeService.add_shifts(request)
+            return {"message": message}      
+        except HTTPException as he:
+            raise he        
+        except Exception as e:
+            return JSONResponse(
+                content={"message": f"Internal error: {str(e)}"},
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    
+    async def add_posts(
+            self,
+            request: AddPostsRequest
+    ) -> dict:
+        try:      
+            message = await self.storeService.add_posts(request)
             return {"message": message}      
         except HTTPException as he:
             raise he        

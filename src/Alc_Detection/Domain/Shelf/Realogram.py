@@ -21,7 +21,6 @@ class Realogram:
         self._planogram = planogram 
         self._accordance = self._compute_accordance()
         self._compute_empties()
-        self._compute_inconsistencies()
         
     @property
     def create_date(self) -> datetime:
@@ -59,14 +58,21 @@ class Realogram:
         r_matrix = self.product_matrix
         p_matrix = self.planogram.product_matrix
         accordance_count = 0
+        deviations = []
         all_boxes_count = len(p_matrix)
-        for _, r_shelf, _, p_shelf in zip(r_matrix, p_matrix):
+        for (_, r_shelf), (_, p_shelf) in zip(r_matrix, p_matrix):
             r_boxes = r_shelf.boxes
             p_boxes = p_shelf.boxes
             for r_box, p_box in zip(r_boxes, p_boxes):
                 if not r_box.is_empty and r_box.product == p_box.product:
                     accordance_count += 1
-                else: r_box.is_incorrect_position = True
+                else:
+                    deviations.append(incongruityDeviation(
+                        product_box=r_box,
+                        right_product=p_box.product,
+                    )) 
+                    r_box.is_incorrect_position = True
+        self._inconsistencies = deviations
         return accordance_count / all_boxes_count * 100
     
     def _compute_empties(self):
@@ -78,22 +84,6 @@ class Realogram:
                         product_box=box                                                
                     ))
         self._empties = deviations
-    
-    def _compute_inconsistencies(self):
-        deviations = []
-        r_matrix = self.product_matrix
-        p_matrix = self.planogram.product_matrix
-        for _, r_shelf, _, p_shelf in zip(r_matrix, p_matrix):
-            r_boxes = r_shelf.boxes
-            p_boxes = p_shelf.boxes
-            for r_box, p_box in zip(r_boxes, p_boxes):
-                if not r_box.is_empty and r_box.product != p_box.product:
-                    r_box.is_incorrect_position = True
-                    deviations.append(incongruityDeviation(
-                        product_box=r_box,
-                        right_product=p_box.product,
-                    ))
-        self._inconsistencies = deviations
     
     @property
     def empties(self) -> list[EmptyDeviation]:

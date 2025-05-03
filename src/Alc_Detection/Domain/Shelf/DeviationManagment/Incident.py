@@ -4,7 +4,7 @@ from Alc_Detection.Domain.Shelf.DeviationManagment.Deviation import Deviation
 from Alc_Detection.Domain.Shelf.DeviationManagment.EmptyDeviation import EmptyDeviation
 from Alc_Detection.Domain.Shelf.ProductMatrix.ProductBox import ProductBox
 from Alc_Detection.Domain.Shelf.Realogram import Realogram
-from Alc_Detection.Domain.Store.Person import Person
+from Alc_Detection.Domain.Store.PersonManagment.Person import Person
 
 class Incident:
     def __init__(self,
@@ -47,6 +47,10 @@ class Incident:
         for deviation in deviations:
             deviation.send_time = self.send_time
             deviation.realogram = self.realogram 
+    
+    @property
+    def shift(self):
+        return self._shift
     
     @property
     def send_time(self):

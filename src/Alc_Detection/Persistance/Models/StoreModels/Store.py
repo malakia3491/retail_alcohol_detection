@@ -11,7 +11,6 @@ class Store(BaseModel):
     
     name = Column(String, nullable=False)
 
-    persons = relationship("Person", back_populates="store", cascade="all, delete-orphan", lazy='selectin')
     store_shifts = relationship("StoreShift", back_populates="store", cascade="all, delete-orphan", lazy='selectin')
     snapshots = relationship("RealogramSnapshot", back_populates="store", cascade="all, delete-orphan", lazy='selectin')
     calibrations = relationship("Calibration", back_populates="store", cascade="all, delete-orphan", lazy='selectin')

@@ -1,0 +1,143 @@
+/* assets/styles.css */
+
+:root {
+  --bg: #f5f7fa;
+  --surface: #ffffff;
+  --primary: #4f46e5;
+  --primary-light: #6366f1;
+  --text: #1f2937;
+  --text-secondary: #4b5563;
+  --border: #e5e7eb;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: 'Inter', sans-serif;
+  background-color: var(--bg);
+  color: var(--text);
+  line-height: 1.6;
+}
+
+#app {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+/* NAVIGATION */
+
+.navbar {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 0.75rem 1.5rem;
+  /* лёгкая тень */
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.nav-list {
+  display: flex;
+  gap: 2rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.nav-item {
+  position: relative;
+}
+
+.nav-button {
+  background: none;
+  border: none;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text);
+  padding: 0.5rem;
+  cursor: pointer;
+  transition: color 0.2s, transform 0.2s;
+}
+
+.nav-button:hover {
+  color: var(--primary);
+  transform: translateY(-2px);
+}
+
+.subnav {
+  position: absolute;
+  top: calc(100% + 0.25rem);
+  left: 0;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+  padding: 0.5rem 0;
+  min-width: 220px;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(10px);
+  transition: opacity 0.2s, transform 0.2s, visibility 0.2s;
+  z-index: 10;
+}
+
+.nav-item:hover .subnav {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
+
+.subnav li {
+  padding: 0.5rem 1rem;
+  font-size: 0.95rem;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+}
+
+.subnav li:hover {
+  background: var(--bg);
+  color: var(--text);
+}
+
+/* MAIN CONTENT */
+
+.main-content {
+  flex: 1;
+  padding: 3rem 2rem;
+}
+
+.home {
+  max-width: 800px;
+  margin: 0 auto;
+  text-align: center;
+}
+
+.home h1 {
+  font-size: 2.5rem;
+  margin-bottom: 1rem;
+  color: var(--primary);
+}
+
+.home p {
+  font-size: 1.125rem;
+  color: var(--text-secondary);
+}
+
+/* UTILITY */
+
+button:focus {
+  outline: none;
+}
+
+a {
+  color: var(--primary);
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+a:hover {
+  color: var(--primary-light);
+}

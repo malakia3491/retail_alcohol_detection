@@ -1,4 +1,7 @@
 from aiogram import Bot, Dispatcher, Router
+from aiogram.enums import ParseMode
+from aiogram.client.default import DefaultBotProperties
+from aiogram.fsm.storage.memory import MemoryStorage
 
 from Alc_Detection.Application.Notification.TelegramBot.Handlers.Handler import Handler
 from Alc_Detection.Application.Notification.TelegramBot.Handlers.StartHandler import StartHandler
@@ -18,11 +21,11 @@ class TelegramInitializer:
         handlers = self._initialize_handlers()
         for handler in handlers:            
             main_router.include_router(handler.router)
-        token = self.config_reader.get_tg_api_key()    
-        url = self.config_reader.get_webhook_url()
-        bot = Bot(token=token)
+        token = self._config_reader.get_tg_api_key()    
+        url = self._config_reader.get_webhook_url()
+        bot = Bot(token=token, default=DefaultBotProperties(parse_mode=ParseMode.HTML))
         await bot.set_webhook(url)        
-        dp = Dispatcher(bot)
+        dp = Dispatcher(storage=MemoryStorage())
         messanger = TelegramMessenger(
             dispatcher=dp,
             bot=bot,

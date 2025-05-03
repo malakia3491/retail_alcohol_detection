@@ -19,11 +19,11 @@ class ShelfController:
         self.router.add_api_route("/realograms/", self.handle_shelf_image, methods=["POST"], status_code=status.HTTP_200_OK)
         self.router.add_api_route("/calibrations/", self.calibrate_planogram, methods=["POST"], status_code=status.HTTP_200_OK)
         self.router.add_api_route("/calibration_boxes/", self.get_calibration_boxes, methods=["POST"], status_code=status.HTTP_200_OK)
-        self.router.add_api_route("/product_images/", self.add_product_images, methods=["POST"], status_code=status.HTTP_200_OK)
+        self.router.add_api_route("/product_images/{product_id}", self.add_product_images, methods=["POST"], status_code=status.HTTP_200_OK)
     
     async def add_product_images(
         self,
-        product_id: UUID = Form(...),
+        product_id: UUID,
         image_files: List[UploadFile] = File(...)
     ) -> dict:
         try:      

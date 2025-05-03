@@ -2,7 +2,6 @@ from fastapi import APIRouter, HTTPException, status, Request, Response
 from fastapi.responses import JSONResponse
 from aiogram import Bot, Dispatcher, types
 from aiogram.types import Update
-from aiogram.dispatcher.webhook import SendMessage
 
 class TelegramBotContoller:
     def __init__(self, 

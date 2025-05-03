@@ -6,14 +6,15 @@ class ProductBox:
         self,
         id=None,
         product: Product=Product(),
-        is_empty=False
+        is_empty=False,
+        is_incorrect_position = False
     ):
         from Alc_Detection.Domain.Shelf.ProductMatrix.ProductBoxStates.InitState import InitState
         self.set_state(InitState())
         self.id = id
         self._product = product
         self._is_empty = is_empty
-        self._is_incorrect_position = False
+        self._is_incorrect_position = is_incorrect_position
         
     def set_state(self, state) -> None:
         self._state = state
@@ -33,7 +34,7 @@ class ProductBox:
         return self
     
     @property
-    def is_incorrect_position(self):
+    def is_incorrect_position(self) -> bool:
         return self._is_incorrect_position
     
     @is_incorrect_position.setter
@@ -41,7 +42,7 @@ class ProductBox:
         self._is_incorrect_position = value 
     
     @property
-    def product(self):
+    def product(self) -> Product:
         return self._product
     
     @product.setter
@@ -49,7 +50,7 @@ class ProductBox:
         self._product = value   
     
     @property
-    def is_empty(self):
+    def is_empty(self) -> bool:
         return self._is_empty
     
     @is_empty.setter
@@ -57,42 +58,46 @@ class ProductBox:
         self._is_empty = value
     
     @property
-    def sort_point(self):
+    def sort_point(self) -> Point:
         return self._state.sort_point(self)
     
     @property
-    def position(self):
+    def position(self) -> Point:
         return self._state.position(self)
     
     @property
-    def height(self):
+    def height(self) -> float:
         return self._state.height(self)
     
     @property
-    def width(self):
+    def width(self) -> float:
         return self._state.width(self)
     
     @property
-    def center(self):
+    def center(self) -> Point:
         return self._state.center(self)
     
     @property
-    def width_point(self):
+    def width_point(self) -> Point:
         return self._state.width_point(self)
     
     @property
-    def p_min(self):
+    def cords(self) -> list[int]:
+        return [self.p_min.x, self.p_min.y, self.p_max.x, self.p_max.y]
+    
+    @property
+    def p_min(self) -> Point:
         return self._state.p_min(self)
     
     @property
-    def p_max(self):
+    def p_max(self) -> Point:
         return self._state.p_max(self)
     
     @property
-    def conf(self):
+    def conf(self) -> float:
         return self._state.conf(self)
     
-    def copy(self):
+    def copy(self) -> 'ProductBox':
         return self._state.copy(self)
     
     def __eq__(self, other) -> bool:

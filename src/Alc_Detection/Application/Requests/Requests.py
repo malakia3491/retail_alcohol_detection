@@ -2,7 +2,7 @@ from typing import List, Optional
 from pydantic import BaseModel
 from uuid import UUID
 
-from Alc_Detection.Application.Requests.Models import Product, ProductMatrix, Store, Shelving, Person, CalibrationBox
+from Alc_Detection.Application.Requests.Models import Post, Product, ProductMatrix, Shift, Store, Shelving, Person, CalibrationBox
     
 class AddPlanogramRequest(BaseModel):
     order_id: UUID
@@ -40,10 +40,15 @@ class AddShelvingsRequest(BaseModel):
 class AddPersonsRequest(BaseModel):
     persons: List[Person]
 
-
 class AddCalibrationBoxesRequest(BaseModel):
     order_id: UUID
     person_id: UUID
     shelving_id: UUID
     store_id: UUID
     calibration_boxes: List[CalibrationBox]
+    
+class AddPostsRequest(BaseModel):
+    posts: List[Post]
+    
+class AddShiftsRequest(BaseModel):
+    shifts: List[Shift]

@@ -1,12 +1,15 @@
-from Alc_Detection.Domain.Store.Post import Post
-
+from Alc_Detection.Domain.Store.PersonManagment.Post import Post
 
 class Person:
-    def __init__(self, name, telegram_id, post: Post, id=None, store=None, is_worker=True):
+    def __init__(
+        self,
+        name: str,
+        telegram_id: str,       
+        is_worker=True,
+        id=None,
+    ):
         self.id = id
-        self.store = store
         self.name = name
-        self.post = post
         self.telegram_id = telegram_id
         self.is_worker = is_worker 
 
@@ -15,4 +18,4 @@ class Person:
                self.telegram_id == value.telegram_id
                
     def __hash__(self):
-        return hash((self.name, self.telegram_id, self.is_worker, self.store))
+        return hash((self.name, self.telegram_id, self.is_worker))

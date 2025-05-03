@@ -2,7 +2,7 @@ from datetime import datetime
 from uuid import UUID  
 from Alc_Detection.Domain.Exceptions.Exceptions import ApprovePlanogramInDeclinedOrder
 from Alc_Detection.Domain.Shelf.Planogram import Planogram
-from Alc_Detection.Domain.Store.Person import Person
+from Alc_Detection.Domain.Store.PersonManagment.Person import Person
 from Alc_Detection.Domain.Store.Shelving import Shelving
 
 class PlanogramOrder:
@@ -32,6 +32,14 @@ class PlanogramOrder:
                 if planogram.id == planogram_id:
                     return planogram
         return None
+    
+    @property
+    def status(self) -> str:
+        if self.is_declined:
+            return "Отменён"
+        if self.is_resolved:
+            return "Согласован"
+        return "В работе"
     
     @property
     def there_is_no_planograms(self) -> bool:

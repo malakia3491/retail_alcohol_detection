@@ -9,22 +9,35 @@ from Alc_Detection.Domain.Shelf.DeviationManagment.Incident import Incident
 from Alc_Detection.Domain.Shelf.DeviationManagment.IncongruityDeviation import incongruityDeviation
 from Alc_Detection.Domain.Shelf.ProductMatrix.ProductBox import ProductBox
 from Alc_Detection.Application.Notification.Message import Message
-from Alc_Detection.Domain.Store.Shift import Shift
+from Alc_Detection.Domain.Store.PersonManagment.Shift import Shift
 from Alc_Detection.Domain.Store.Store import Store
 from Alc_Detection.Domain.Shelf.Realogram import Realogram
+from Alc_Detection.Persistance.Repositories.PostRepository import PostRepository
 from Alc_Detection.Persistance.Repositories.StoreRepository import StoreRepository
 
 class IncidentManager:
     def __init__(self,
                  store_service: StoreService,
                  store_repository: StoreRepository,
+                 post_repository: PostRepository,
                  settings: Settings,
                  messenger: Messenger
     ):
         self._store_service = store_service
         self._store_repository = store_repository
+        self._post_repository = post_repository
         self._settings = settings
         self._messenger = messenger        
+    
+    async def on_start(self):
+        posts = await self._post_repository.get_all()
+        self._regular_posts = []
+        self._administrative_posts = []
+        for post in posts:
+            if post.is_regular:
+                self._regular_posts.append(post)
+            elif post.is_administrative:
+                self._administrative_posts.append(post)
     
     async def handle_realogram(
         self,
@@ -37,10 +50,7 @@ class IncidentManager:
                 incident.resolve(datetime.now().time()) 
         else:
             now = datetime.now()       
-            shift = await self._store_service.get_actual_store_shift(
-                store=store,
-                date=now.date()
-            )
+            shift = store.actual_shift
             update_incidents = []            
             for incident in unresolved_incidents:
                 for deviation in incident.deviations:
@@ -68,11 +78,11 @@ class IncidentManager:
                                     planogram_img_src=realogram.planogram.img_src,
                                     incident=incident
                             ) for incident in new_incidents]
-                for message in messages:
-                    self._messenger.send(
-                        ids=[],
-                        message=message
-                    )                                        
+                # for message in messages:
+                #     self._messenger.send(
+                #         ids=[],
+                #         message=message
+                #     )                                        
     
     async def _create_incidents(
         self,
@@ -125,18 +135,20 @@ class IncidentManager:
         admin_incident = None
         new_incident = None
         if len(deviations) >= self._settings.FACES_COUNT:
+            employees = shift.get_actual_employees_by(self._regular_posts)
             new_incident = Incident(
                 send_time=datetime.now().time(),
                 realogram=realogram,
                 deviations=deviations,
-                responsible_employees=shift.get_workers(),
+                responsible_employees=employees,
                 shift=shift)
-        if len(not_enough_product_deviations > 0):
+        if len(not_enough_product_deviations) > 0:
+            administators = shift.get_actual_employees_by(self._administrative_posts)
             admin_incident = Incident(
                 send_time=datetime.now().time(),
                 realogram=realogram,
                 deviations=not_enough_product_deviations,
-                responsible_employees=shift.get_administrators(),
+                responsible_employees=administators,
                 shift=shift)        
         return new_incident, admin_incident  
     
@@ -153,11 +165,12 @@ class IncidentManager:
                     deviations.append(deviation)
        
         if len(deviations) >= self._settings.FACES_COUNT:
+            employees = shift.get_actual_employees_by(self._regular_posts)
             new_incident = Incident(
                 send_time=datetime.now().time(),
                 realogram=realogram,
                 deviations=deviations,
-                responsible_employees=shift.get_workers(),
+                responsible_employees=employees,
                 shift=shift)
             return new_incident
         return None     

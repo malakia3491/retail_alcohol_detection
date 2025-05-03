@@ -73,6 +73,7 @@ class PlanogramOrderMapper:
                                             develop_date = domain_model.develop_date,
                                             implementation_date = domain_model.implementation_date,
                                             shelvings=shelvings,
-                                            is_declined = domain_model.is_declined)
+                                            is_declined = domain_model.is_declined,
+                                            status=domain_model.status)
         return order
          

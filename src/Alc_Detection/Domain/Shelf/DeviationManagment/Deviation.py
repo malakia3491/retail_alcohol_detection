@@ -1,8 +1,8 @@
 from datetime import time
 
+from Alc_Detection.Domain.Shelf.ProductMatrix.Point import Point
 from Alc_Detection.Domain.Shelf.ProductMatrix.ProductBox import ProductBox
-from Alc_Detection.Domain.Shelf.Realogram import Realogram
-from Alc_Detection.Domain.Store.Person import Person
+from Alc_Detection.Domain.Store.PersonManagment.Person import Person
 
 class Deviation:
     def __init__(
@@ -21,8 +21,12 @@ class Deviation:
     def product(self):
         return self._product_box.product
     
+    @property
+    def product_box(self):
+        return self._product_box
+    
     @property 
-    def position(self):
+    def position(self) -> Point:
         return self._product_box.position
     
     @property
@@ -57,8 +61,8 @@ class Deviation:
     def realogram(self):
         return self._realogram
     
-    @realogram.__setter_
-    def realogram(self, value: Realogram):
+    @realogram.setter
+    def realogram(self, value):
         self._realogram = value
     
     @property

@@ -135,7 +135,6 @@ class ShelfService:
             realogram = Realogram(
                 planogram=planogram,
                 product_matrix=product_matrix,
-                shelving=planogram.shelving,
                 create_date=datetime.now(),
                 img_src=path
             )
@@ -231,8 +230,7 @@ class ShelfService:
             shelf_idx: Shelf(groups[lbl])
             for shelf_idx, lbl in enumerate(sorted_clusters)
         }
-        matrix = ProductMatrix(shelves=shelves)
-        matrix.define_positions()        
+        matrix = ProductMatrix(shelves=shelves).define_positions()     
         return matrix
     
     def _compute_distance_threshold(self, y_coords: np.ndarray[int]) -> float:

@@ -14,5 +14,5 @@ class Incident(BaseModel):
     elimination_time = Column(DateTime, nullable=True)
     message = Column(String)
     
-    detections = relationship("RealogramDetection", back_populates="incident")
-    store_shift = relationship("StoreShift", back_populates="incidents")
+    detections = relationship("RealogramDetection", back_populates="incident", lazy='selectin')
+    store_shift = relationship("StoreShift", back_populates="incidents", lazy='selectin')

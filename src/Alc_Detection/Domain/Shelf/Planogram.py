@@ -2,7 +2,7 @@ from datetime import datetime
 from uuid import UUID
 from Alc_Detection.Domain.Exceptions.Exceptions import InvalidCalibrationBoxes
 from Alc_Detection.Domain.Shelf.ProductMatrix.CalibrationBox import CalibrationBox
-from Alc_Detection.Domain.Store.Person import Person
+from Alc_Detection.Domain.Store.PersonManagment.Person import Person
 from Alc_Detection.Domain.Store.Product import Product
 from Alc_Detection.Domain.Store.Shelving import Shelving
 from Alc_Detection.Domain.Shelf.ProductMatrix.ProductMatrix import ProductMatrix
