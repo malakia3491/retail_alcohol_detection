@@ -7,9 +7,9 @@ export interface Planogram {
     id?: string;
     author: Person;
     shelving: Shelving;
-    createDate: Date;
+    create_date: Date;
     products: PlanogramProduct[];
-    productMatrix: ProductMatrix;
+    product_matrix: ProductMatrix;
     approver?: Person;
-    approvalDate?: Date;
+    approval_date?: Date;
   }

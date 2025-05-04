@@ -23,7 +23,7 @@ class ProductMatrixMapper:
         product_count = {}
         id_to_product = {}
         for product, planogram_product in zip(products, request_model.products):
-            product_count[product.id] = planogram_product.count
+            product_count[product] = planogram_product.count
             id_to_product[planogram_product.product_id] = product
             
         shelfs: dict[int, Shelf] = {}

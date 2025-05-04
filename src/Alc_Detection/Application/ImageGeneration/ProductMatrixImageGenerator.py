@@ -11,7 +11,7 @@ class ProductMatrixImageGenerator:
     def __init__(self,
                  image_saver: ImageSaver
     ):
-        self._image_save = image_saver
+        self._image_saver = image_saver
     def generate(self,
                  id_name: str,
                  product_matrix: ProductMatrix,
@@ -52,7 +52,7 @@ class ProductMatrixImageGenerator:
                     continue  # Нет информации о товаре
                 
                 # Получаем путь к папке с изображениями товара
-                product_crop_dir = self.image_saver._path_dict.get(Product.__name__)
+                product_crop_dir = self._image_saver._path_dict.get(Product.__name__)
                 if not product_crop_dir:
                     continue
                 product_dir = os.path.join(product_crop_dir, str(product.id))
@@ -87,9 +87,9 @@ class ProductMatrixImageGenerator:
                 # Вставляем ячейку в планограмму
                 planogram_img.paste(cell_img, (x, y))
         
-        path = self._image_save.save_(
+        path = self._image_saver.save_(
             image=planogram_img,
-            save_dir=id_name,
+            save_dir=str(id_name),
             obj_type=obj_type
         )
         

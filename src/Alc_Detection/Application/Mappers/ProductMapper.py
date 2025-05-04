@@ -54,4 +54,5 @@ class ProductMapper:
             raise ValueError(domain_model)
         
         return ProductResponseModel(id=domain_model.id,
+                                    image_url=f"/static/products/{domain_model.id}/{domain_model.image.name}",
                                     name=domain_model.name)

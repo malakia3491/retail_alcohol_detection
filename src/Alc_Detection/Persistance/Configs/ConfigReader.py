@@ -16,6 +16,30 @@ class IniConfigReader(ConfigReader):
         except Exception as ex:
             raise ex
         
+    def get_secret(self) -> str:
+        try:
+            self.config.read(self.path_to_config)
+            secret = self.config["AUTH"]["SECRET_KEY"]
+            return secret
+        except Exception as ex:
+            raise ex
+
+    def get_algorithm(self) -> str:
+        try:
+            self.config.read(self.path_to_config)
+            algorithm = self.config["AUTH"]["ALGORITHM"]
+            return algorithm
+        except Exception as ex:
+            raise ex
+        
+    def get_access_token_expire(self) -> int:
+        try:
+            self.config.read(self.path_to_config)
+            expire = int(self.config["AUTH"]["ACCESS_TOKEN_EXPIRE_MINUTES"])
+            return expire
+        except Exception as ex:
+            raise ex
+    
     def get_model_path(self,
                        model_type: str,
                        version: str

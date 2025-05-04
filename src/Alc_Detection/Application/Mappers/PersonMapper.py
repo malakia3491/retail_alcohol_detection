@@ -10,7 +10,9 @@ class PersonMapper:
         return Person(id=db_model.id,
                       name=db_model.name,
                       telegram_id=db_model.telegram_id,
-                      is_worker=db_model.is_worker)
+                      password_hash=db_model.password_hash,
+                      is_worker=db_model.is_worker,
+                      is_active=db_model.is_active)
             
     def map_to_db_model(self, domain_model: Person) -> PersonModel:
         if domain_model is None: return None

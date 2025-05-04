@@ -10,7 +10,7 @@ from Alc_Detection.Persistance.Models.BaseModel import BaseModel
 class CalibrationBox(BaseModel):
     __tablename__ = "calibration_boxes"
     
-    calibration_id = Column(UUID(as_uuid=True), ForeignKey("calibrations.id"))
+    calibration_id = Column(UUID(as_uuid=True), ForeignKey("calibrations.id", ondelete="CASCADE"))
     box_cords = Column(Vector(4))
     matrix_cords = Column(Vector(2))
     conf = Column(Float)

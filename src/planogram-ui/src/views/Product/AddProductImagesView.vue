@@ -54,7 +54,6 @@
   import type { Product } from '@/types';
   import { get_products } from '@/api/products';
   import { load_product_imgs } from '@/api/products';
-  import axios from 'axios';
   
   export default defineComponent({
     name: 'AddProductImagesView',

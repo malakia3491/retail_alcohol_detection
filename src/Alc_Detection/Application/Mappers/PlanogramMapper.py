@@ -64,16 +64,16 @@ class PlanogramMapper:
             raise ValueError(domain_model)
         
         boxes: dict[int, list[ProductBoxModel]] = {}
-        for product_id in domain_model.product_count: boxes[product_id] = []
+        for product in domain_model.product_count: boxes[product.id] = []
         for _, shelf in domain_model.product_matrix:
             for box in shelf.boxes:
                 boxes[box.product.id].append(ProductBoxModel(matrix_cords=(int(box.position.x), int(box.position.y))))
                                                         
         planogram_products = []
-        for product_id in domain_model.product_count:
-            planogram_product = PlanogramProductModel(product_id = product_id,
-                                                      count = int(domain_model.product_count[product_id]),
-                                                      boxes = boxes[product_id])            
+        for product in domain_model.product_count:
+            planogram_product = PlanogramProductModel(product_id = product.id,
+                                                      count = int(domain_model.product_count[product]),
+                                                      boxes = boxes[product.id])            
             planogram_products.append(planogram_product)
                        
         planogram = PlanogramModel(

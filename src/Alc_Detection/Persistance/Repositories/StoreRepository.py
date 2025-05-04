@@ -32,6 +32,9 @@ class StoreRepository:
             result = await session.execute(select(StoreModel))
             [self._cache.put(row.id, self._store_mapper.map_to_domain_model(row)) for row in result.scalars().all()]
          
+    async def get_all(self) -> list[Store]:
+        return self._cache.get_all()
+    
     async def get(self, *ids: UUID) -> Store | List[Store]:
         in_cache_ids, not_in_cache_ids = self._cache.in_cache(*ids)
         objs = [self._cache.get(id) for id in in_cache_ids]

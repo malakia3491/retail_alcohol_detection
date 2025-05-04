@@ -8,8 +8,8 @@ from Alc_Detection.Persistance.Models.BaseModel import BaseModel
 class Embedding(BaseModel):
     __tablename__ = "embeddings"
 
-    image_id = Column(UUID(as_uuid=True), ForeignKey("product_images.id"))
-    model_id = Column(UUID(as_uuid=True), ForeignKey("embedding_models.id"))
+    image_id = Column(UUID(as_uuid=True), ForeignKey("product_images.id", ondelete="CASCADE"))
+    model_id = Column(UUID(as_uuid=True), ForeignKey("embedding_models.id", ondelete="CASCADE"))
  
     vector = Column(Vector(256))
         

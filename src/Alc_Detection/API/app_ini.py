@@ -1,8 +1,12 @@
 import torch
 from fastapi import FastAPI
+from passlib.context import CryptContext
 
+from Alc_Detection.API.Controllers.AuthController import AuthController
 from Alc_Detection.API.Controllers.Controllers import *
 
+from Alc_Detection.Application.Auth.AuthService import AuthService
+from Alc_Detection.Application.Auth.TokenService import TokenService
 from Alc_Detection.Application.IncidentManagement.Settings import Settings
 from Alc_Detection.Application.Mappers.PostMapper import PostMapper
 from Alc_Detection.Application.Mappers.RealogramMapper import RealogramMapper
@@ -43,9 +47,6 @@ class ModulesInitializer:
             self.app.include_router(controller.router, prefix=meta_data[0], tags=[meta_data[1]])
     
     async def initialize(self):
-        
-
-        
         await self.db_starter.initialize()        
         product_mapper, \
         person_mapper, \
@@ -72,8 +73,22 @@ class ModulesInitializer:
                                     post_mapper=post_mapper)
         
         image_saver = ImageSaver(product_crop_save_dir=self.config_reader.get_save_dir_path("product_crops"),
-                                 realogram_save_dir=self.config_reader.get_save_dir_path("realogram_snapshots"))
+                                 realogram_save_dir=self.config_reader.get_save_dir_path("realogram_snapshots"),
+                                 planogram_save_dir=self.config_reader.get_save_dir_path("planogram_images"))
         image_generator = ProductMatrixImageGenerator(image_saver=image_saver)
+        
+        token_service = TokenService(
+            secret_key=self.config_reader.get_secret(),
+            algorithm=self.config_reader.get_algorithm(),
+            access_token_expire_minutes=self.config_reader.get_access_token_expire()
+        )
+        pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto", bcrypt__rounds=12)
+        auth_service = AuthService(
+            user_repository=person_repository,
+            token_service=token_service,
+            pwd_context=pwd_context
+        )
+        self._initialize_auth_module(auth_service=auth_service)        
                 
         # messanger = await self._initialize_notification_module()
         messanger = None
@@ -87,7 +102,8 @@ class ModulesInitializer:
             planogram_order_repository=planogram_order_repository,
             product_repository=product_repository,
             product_matrix_mapper=product_matrix_mapper,
-            planogram_order_mapper=planogram_order_mapper)
+            planogram_order_mapper=planogram_order_mapper,
+            planogram_mapper=planogram_mapper)
         
         settings = Settings(faces_count=1)
         incident_manager = self._initialize_incident_management(
@@ -144,6 +160,14 @@ class ModulesInitializer:
         reps = [product_repository, store_repository, shelving_repository, planogram_order_repository, person_repository, embedding_model_repository, post_repository]
         for rep in reps: await rep.on_start()        
         return store_repository, shelving_repository, planogram_order_repository, person_repository, product_repository, embedding_model_repository, post_repository
+    
+    def _initialize_auth_module(
+        self,
+        auth_service: AuthService,        
+    ):
+        controller = AuthController(auth_service=auth_service)
+        self.controllers_dict["auth_controller"] = (controller, ("/auth", "auth"))
+        return auth_service
     
     async def _initialize_videoanalytics(self,
                                          image_saver: ImageSaver,
@@ -214,7 +238,8 @@ class ModulesInitializer:
                                  product_repository: ProductRepository,
                                  product_matrix_mapper: ProductMatrixMapper,
                                  planogram_order_mapper: PlanogramOrderMapper,
-                                 image_generator: ProductMatrixImageGenerator):   
+                                 image_generator: ProductMatrixImageGenerator,
+                                 planogram_mapper: PlanogramMapper):   
         store_service = StoreService(store_repository=store_repository,
                                      shelving_repository=shelving_repository,
                                      person_repository=person_repository,
@@ -223,7 +248,8 @@ class ModulesInitializer:
                                      planogram_order_mapper=planogram_order_mapper,
                                      product_matrix_mapper=product_matrix_mapper,
                                      image_generator=image_generator,
-                                     post_repository=post_repository)
+                                     post_repository=post_repository,
+                                     planogram_mapper=planogram_mapper)
         controller = StoreController(storeService=store_service)
         self.controllers_dict["store_controller"] = (controller, ("/retail", "retail"))
         return store_service

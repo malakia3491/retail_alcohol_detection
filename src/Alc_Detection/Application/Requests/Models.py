@@ -62,6 +62,9 @@ class Person(BaseModel):
     id: Optional[UUID] = None
     telegram_id: Optional[str] = None
     name: str
+    is_worker: Optional[bool] = None
+    is_active: Optional[bool] = None
+    access_token: Optional[str] = None
 
 class Shelving(BaseModel):
     id: Optional[UUID] = None
@@ -104,3 +107,8 @@ class ProductsResponse(BaseModel):
     
 class ShelvingsResponse(BaseModel):
     shelvings: List[Shelving]
+    
+class AuthResponse(BaseModel):
+    access_token: str
+    token_type: str
+    user_id: UUID

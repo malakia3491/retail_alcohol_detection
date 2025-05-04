@@ -1,10 +1,22 @@
+export * from './product_matrix/product_matrix'
+export * from './product_matrix/calibration_box'
+export * from './product_matrix/planogram_product'
+export * from './product_matrix/product_box'
+export * from './product_matrix/shelf'
+
 export * from './store/shelf/shelving'
 export * from './store/planogram_order'
 export * from './store/post'
 export * from './store/person_managment/person'
 export * from './store/store'
 export * from './store/product'
+export * from './store/shelf/planogram'
+
 
 export * from './responses/planogram_orders_page_response'
 export * from './responses/shelvings_response'
 export * from './responses/product_response'
+export * from './responses/auth_response'
+
+export * from './requests/add_planogram_request'
+export * from './requests/approve_planogram_request'

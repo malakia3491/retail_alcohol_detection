@@ -5,6 +5,7 @@ import uuid
 import numpy as np
 
 from pathlib import Path
+from PIL import Image
 
 from Alc_Detection.Domain.Shelf.Planogram import Planogram
 from Alc_Detection.Domain.Shelf.Realogram import Realogram
@@ -14,7 +15,7 @@ class ImageSaver:
     def __init__(self,
                  product_crop_save_dir: str,
                  realogram_save_dir: str,
-                 planogram_save_dir: str=None
+                 planogram_save_dir: str
     ):
         self._path_dict: dict[str, str] = {
             Product.__name__:  product_crop_save_dir,
@@ -22,9 +23,9 @@ class ImageSaver:
             Planogram.__name__: planogram_save_dir,
         } 
         
-    def get_path(self, save_dir, obj_type):
+    def get_path(self, obj_type):
         try:
-            return ""
+            return self._path_dict[obj_type.__name__]
         except Exception as ex:
             raise ex
     

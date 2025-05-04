@@ -4,6 +4,7 @@ from datetime import datetime
 from Alc_Detection.Application.ImageGeneration.ProductMatrixImageGenerator import ProductMatrixImageGenerator
 from fastapi import HTTPException, status
 
+from Alc_Detection.Application.Mappers.PlanogramMapper import PlanogramMapper
 from Alc_Detection.Domain.Entities import *
 from Alc_Detection.Domain.Exceptions.Exceptions import ApprovePlanogramInDeclinedOrder, InvalidCalibrationBoxes
 from Alc_Detection.Domain.Shelf.Calibration import Calibration
@@ -12,15 +13,19 @@ from Alc_Detection.Domain.Store.PersonManagment.Post import Post
 from Alc_Detection.Domain.Store.PersonManagment.Shift import Shift
 from Alc_Detection.Domain.Store.PlanogramOrder import PlanogramOrder
 from Alc_Detection.Application.Extentions.Utils import between
-from Alc_Detection.Application.StoreInformation.Exceptions.Exceptions import \
-    (CalibrationException, IncorrectPlanogram, IncorrectUpdateData,
+from Alc_Detection.Application.StoreInformation.Exceptions.Exceptions import (
+     CalibrationException, IncorrectPlanogram, IncorrectUpdateData,
      InvalidObjectId, InvalidPlanogramApprove, InvalidPlanogramUnapprove,
      PersonIsNotWorkerAlready, PlanogramOrderIsNotResolved, ShelvingIsNotAssigned,
-     ShelvingPlanogramIsAgreed)
-from Alc_Detection.Application.Requests.Requests import \
-(AddPersonsRequest, AddPostsRequest, AddProductsRequest, AddShelvingsRequest, AddShiftsRequest,
- AddStoresRequest, ApprovePlanogramRequest, DismissPersonRequest,
- ProductMatrix as ProductMatrixModel, Shelving as ShelvingModel, Product as ProductModel)
+     ShelvingPlanogramIsAgreed
+)
+from Alc_Detection.Application.Requests.Requests import (
+    AddPersonsRequest, AddPostsRequest, AddProductsRequest, AddShelvingsRequest, AddShiftsRequest,
+    AddStoresRequest, ApprovePlanogramRequest, DismissPersonRequest,
+    ProductMatrix as ProductMatrixModel, Shelving as ShelvingModel, Product as ProductModel)
+from Alc_Detection.Application.Requests.Models import (
+    Planogram as PlanogramModel
+)
 from Alc_Detection.Application.Mappers.PlanogramOrderMapper import PlanogramOrderMapper
 from Alc_Detection.Application.Mappers.ProductMatrixMapper import ProductMatrixMapper
 from Alc_Detection.Application.Requests.Models import PlanogramOrdersPageResponse, PlanogramOrdersResponse, ProductsResponse, ShelvingsResponse
@@ -37,8 +42,10 @@ class StoreService:
                  product_repository: ProductRepository,
                  post_repository: PostRepository,
                  planogram_order_mapper: PlanogramOrderMapper,
+                 planogram_mapper: PlanogramMapper,
                  product_matrix_mapper: ProductMatrixMapper,):
         self._post_repository = post_repository
+        self._planogram_mapper = planogram_mapper
         self._image_generator = image_generator
         self._store_repository = store_repository
         self._shelving_repository = shelving_repository
@@ -54,6 +61,42 @@ class StoreService:
         product: Product
     ) -> int:
         raise NotImplementedError()
+    
+    async def get_work_place(
+        self,
+        person: Person
+    ) -> Store:
+        try:
+            stores = await self._store_repository.get_all()
+            work_place = None
+            for store in stores:
+                if store.is_employee(person):
+                    work_place = store
+                    break
+            return work_place
+        except Exception as ex:
+            print(traceback.format_exc())
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=ex.__str__())
+    
+    async def get_planogram(
+        self,
+        order_id: str,
+        planogram_id: str
+    ) -> PlanogramModel:
+        try:
+            order = await self._planogram_order_repository.get(order_id)
+            if order is None:
+                raise InvalidObjectId()
+            planogram = order.get_planogram(planogram_id)
+            response = self._planogram_mapper.map_to_response_model(planogram)
+            return response
+        except Exception as ex:
+            print(traceback.format_exc())
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=ex.__str__())
     
     async def get_shelving(
         self,
@@ -83,6 +126,7 @@ class StoreService:
                 products=[ProductModel(
                     id=product.id,
                     name=product.name,
+                    image_url=f"/static/products/{product.id}/{product.image.name}"
                    )
                     for product in products]
             )

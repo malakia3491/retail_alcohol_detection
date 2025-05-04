@@ -11,7 +11,7 @@ class Calibration(BaseModel):
     
     store_id = Column(UUID(as_uuid=True), ForeignKey("stores.id"))
     person_id = Column(UUID(as_uuid=True), ForeignKey("persons.id"))
-    planogram_id = Column(UUID(as_uuid=True), ForeignKey("planograms.id"))
+    planogram_id = Column(UUID(as_uuid=True), ForeignKey("planograms.id", ondelete="CASCADE"))
     calibration_date = Column(DateTime)
     
     store = relationship("Store", back_populates="calibrations", lazy='selectin')

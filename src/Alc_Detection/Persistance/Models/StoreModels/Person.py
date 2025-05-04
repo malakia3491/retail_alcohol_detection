@@ -13,6 +13,8 @@ class Person(BaseModel):
     
     name = Column(String)
     is_worker = Column(Boolean)
+    is_active = Column(Boolean, default=True)
+    password_hash = Column(String(128)) 
     
     planogram_orders = relationship("PlanogramOrder", back_populates="person", cascade="all, delete-orphan", lazy='selectin')
     uploaded_planograms = relationship("Planogram", foreign_keys="Planogram.author_id", back_populates="author", cascade="all, delete-orphan", lazy='selectin')

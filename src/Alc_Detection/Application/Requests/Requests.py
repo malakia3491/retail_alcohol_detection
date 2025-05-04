@@ -52,3 +52,7 @@ class AddPostsRequest(BaseModel):
     
 class AddShiftsRequest(BaseModel):
     shifts: List[Shift]
+    
+class LoginRequest(BaseModel):
+    login: str
+    password: str

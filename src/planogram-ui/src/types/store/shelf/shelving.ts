@@ -1,5 +1,5 @@
 export interface Shelving {
     id?: string;
-    shelvesCount: number;
+    shelves_count: number;
     name: string;
   }

@@ -6,10 +6,10 @@ import type { Product, ProductsResponse } from '@/types'
 const products_url = `${base_url}/retail/products`;
 const video_products_url = `${base_url}/video_control`;
 
-export const get_products = async (): Promise<Array<Product> | null> => {
+export const get_products = async (): Promise<Product[]> => {
     const url = `${products_url}/`;
     const result = await axios.get<ProductsResponse>(url);
-    const products = result.data.products as Array<Product>;
+    const products = result.data.products as Product[];
     return products;
 };
 

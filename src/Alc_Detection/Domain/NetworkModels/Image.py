@@ -26,11 +26,10 @@ class Image:
         
     @property
     def name(self) -> str:
-        match = re.search(r'([a-f0-9\-]{36})\\[a-f0-9\-]{36}\.jpg$', self._path, re.IGNORECASE)
-        if match:
-            return match.group(1)
-        raise ValueError("UUID not found in the image path")
-    
+        pattern = r"([0-9a-fA-F]{8}-(?:[0-9a-fA-F]{4}-){3}[0-9a-fA-F]{12}\.[^\\/]+)$"
+        match = re.search(pattern, self.path, re.IGNORECASE)
+        return match.group(1) if match else None
+        
     @property
     def path(self) -> str:
         return self._path   

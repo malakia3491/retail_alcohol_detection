@@ -10,7 +10,7 @@ class RealogramSnapshot(BaseModel):
     __tablename__ = "realogram_snapshots"
     
     store_id = Column(UUID(as_uuid=True), ForeignKey("stores.id"))
-    planogram_id = Column(UUID(as_uuid=True), ForeignKey("planograms.id"))
+    planogram_id = Column(UUID(as_uuid=True), ForeignKey("planograms.id", ondelete="CASCADE"))
     shelving_id = Column(UUID(as_uuid=True), ForeignKey("shelvings.id"))
     datetime_upload = Column(DateTime)
     img_src = Column(String)

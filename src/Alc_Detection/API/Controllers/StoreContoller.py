@@ -4,7 +4,7 @@ from datetime import date, datetime
 from fastapi import APIRouter, Form, HTTPException, status
 from fastapi.responses import JSONResponse
 
-from Alc_Detection.Application.Requests.Models import PlanogramOrder, PlanogramOrdersPageResponse, PlanogramOrdersResponse, ProductsResponse, ShelvingsResponse
+from Alc_Detection.Application.Requests.Models import Planogram, PlanogramOrder, PlanogramOrdersPageResponse, PlanogramOrdersResponse, ProductsResponse, ShelvingsResponse
 from Alc_Detection.Application.Requests.Requests import \
 (AddPersonsRequest, AddPlanogramRequest, AddPostsRequest, AddProductsRequest, AddShelvingsRequest,
  AddStoresRequest, ApprovePlanogramRequest, DismissPersonRequest, UpdatePersonRequest)
@@ -55,6 +55,11 @@ class StoreController:
                                   self.add_planogram,
                                   methods=["POST"],
                                   status_code=status.HTTP_200_OK)
+        self.router.add_api_route("/planograms/{order_id}/{planogram_id}/",
+                                  self.get_planogram,
+                                  methods=["GET"],
+                                  status_code=status.HTTP_200_OK,
+                                  response_model=Planogram)
         self.router.add_api_route("/planograms/approve/",
                                   self.approve_planogram,
                                   methods=["PUT"],
@@ -98,6 +103,24 @@ class StoreController:
                                   methods=["GET"],
                                   status_code=status.HTTP_200_OK,
                                   response_model=ShelvingsResponse)
+    
+    async def get_planogram(
+        self,
+        order_id: UUID,
+        planogram_id: UUID
+    ) -> Planogram:
+        try:
+            response = await self.storeService.get_planogram(
+                order_id=order_id,
+                planogram_id=planogram_id
+            )        
+            return response
+        except HTTPException as he:
+            raise he
+        except Exception as e:
+            return JSONResponse(
+                content={"message": f"Internal error: {str(e)}"},
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)
     
     async def add_planogram(self,
                             request: AddPlanogramRequest
@@ -251,8 +274,7 @@ class StoreController:
             return JSONResponse(
                 content={"message": f"Internal error: {str(e)}"},
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)
-        
-    
+            
     async def add_stores(
             self,
             request: AddStoresRequest

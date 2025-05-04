@@ -79,3 +79,10 @@ class PersonRepository:
         else:
             raise ObjectUpdateException(object_type=Person, object_id=obj_id)
         return len([obj])
+    
+    async def find_by_username(self, username: str) -> Person | None:
+        persons: list[Person] = self._cache.get_all()
+        for person in persons:
+            if person.name == username:
+                return person
+        return None

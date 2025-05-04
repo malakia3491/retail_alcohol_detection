@@ -1,6 +1,10 @@
 <template>
   <nav class="navbar">
     <ul class="nav-list">
+      <li class="nav-item">
+         <router-link to="/profile" class="nav-button">Личный кабинет</router-link>
+      </li>
+
       <!-- Приказы -->
       <li class="nav-item">
         <button class="nav-button" @click="toggle('orders')">

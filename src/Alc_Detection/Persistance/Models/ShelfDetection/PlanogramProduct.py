@@ -7,7 +7,7 @@ class PlanogramProduct(BaseModel):
     __tablename__ = "planogram_products"
     
     product_id = Column(UUID(as_uuid=True), ForeignKey("products.id"))
-    planogram_id = Column(UUID(as_uuid=True), ForeignKey("planograms.id"))
+    planogram_id = Column(UUID(as_uuid=True), ForeignKey("planograms.id", ondelete="CASCADE"))
     count = Column(Integer)
     
     product = relationship("Product", back_populates="planogram_products", lazy='selectin')
