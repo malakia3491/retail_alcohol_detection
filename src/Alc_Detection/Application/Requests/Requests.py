@@ -2,7 +2,7 @@ from typing import List, Optional
 from pydantic import BaseModel
 from uuid import UUID
 
-from Alc_Detection.Application.Requests.Models import Post, Product, ProductMatrix, Shift, Store, Shelving, Person, CalibrationBox
+from Alc_Detection.Application.Requests.Models import Permition, Post, Product, ProductMatrix, Schedule, Shift, Store, Shelving, Person, CalibrationBox
     
 class AddPlanogramRequest(BaseModel):
     order_id: UUID
@@ -15,7 +15,7 @@ class UpdatePersonRequest(BaseModel):
     telegram_id: Optional[str] = None
     store_id: Optional[UUID] = None
     name: Optional[str] = None
-    is_worker: Optional[bool] = None
+    is_store_worker: Optional[bool] = None
     
 class ApprovePlanogramRequest(BaseModel):
     approver_id: UUID
@@ -51,8 +51,20 @@ class AddPostsRequest(BaseModel):
     posts: List[Post]
     
 class AddShiftsRequest(BaseModel):
+    store_id: UUID
     shifts: List[Shift]
+    
+class AddScheduleRequest(BaseModel):
+    store_id: UUID
+    shift_id: UUID
+    schedule: Schedule
     
 class LoginRequest(BaseModel):
     login: str
     password: str
+    
+class AddPostsRequest(BaseModel):
+    posts: list[Post]
+    
+class AddPermitionsRequest(BaseModel):
+    permitions: list[Permition]

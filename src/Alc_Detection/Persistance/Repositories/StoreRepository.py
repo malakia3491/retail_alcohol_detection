@@ -1,4 +1,6 @@
 from uuid import UUID
+from Alc_Detection.Application.Mappers.ScheduleMapper import ScheduleMapper
+from Alc_Detection.Application.Mappers.ShiftMapper import ShiftMapper
 from Alc_Detection.Domain.Shelf.DeviationManagment.Incident import Incident
 from Alc_Detection.Domain.Shelf.Realogram import Realogram
 from sqlalchemy import select, update, delete
@@ -9,6 +11,8 @@ from typing import Union, List, Optional
 from Alc_Detection.Domain.Entities import Store
 from Alc_Detection.Application.Mappers.Mappers import StoreMapper
 from Alc_Detection.Domain.Shelf.Calibration import Calibration
+from Alc_Detection.Domain.Store.PersonManagment.Schedule import Schedule
+from Alc_Detection.Domain.Store.PersonManagment.Shift import Shift
 from Alc_Detection.Persistance.Cache.CacheBase import CacheBase
 from Alc_Detection.Persistance.Exceptions import ObjectUpdateException
 from Alc_Detection.Persistance.Models.Models import Calibration as CalibrationModel
@@ -17,14 +21,19 @@ from Alc_Detection.Persistance.Models.Models import Store as StoreModel
 from Alc_Detection.Persistance.Models.Models import RealogramSnapshot as RealogramModel
 from Alc_Detection.Persistance.Models.Models import RealogramDetection as RealogramDetectionModel
 from Alc_Detection.Persistance.Models.Models import Incident as IncidentModel
+from Alc_Detection.Persistance.Models.Models import StoreShift as ShiftModel
 
 class StoreRepository:
     def __init__(self,
                  session_factory: AsyncSession,
                  cache: CacheBase,
-                 store_mapper: StoreMapper): 
+                 store_mapper: StoreMapper,
+                 shift_mapper: ShiftMapper,
+                 schedule_mapper: ScheduleMapper): 
         self.session_factory = session_factory
         self._store_mapper = store_mapper
+        self._shift_mapper = shift_mapper
+        self._schedule_mapper = schedule_mapper
         self._cache = cache
 
     async def on_start(self):
@@ -168,10 +177,44 @@ class StoreRepository:
             return len([incidents_db])
         return 0        
     
-    async def add_shift(
-        self
+    async def add_shifts(
+        self,
+        store: Store,
+        *shifts: Shift
     ) -> int:
-        raise NotImplementedError()
+        if self._cache.contains(store):
+            shifts_db = []
+            for shift in shifts:
+                shift_db = self._shift_mapper.map_to_db_model(store=store, domain_model=shift)
+                shifts_db.append(shift_db)         
+            async with self.session_factory() as session:
+                session.add_all(shifts_db)
+                await session.commit()
+                for incident in shifts_db: await session.refresh(incident)  
+            for shift_db, shift in zip(shifts_db, shifts):
+                shift.id = shift.id                 
+            return len([shifts_db])
+        return 0     
+    
+    async def add_schedules(
+        self,
+        store: Store,
+        shift: Shift,
+        *schedules: Schedule 
+    ) -> int:
+        if self._cache.contains(store):
+            schedules_db = []
+            for schedule in schedules:
+                schedule_db = self._schedule_mapper.map_to_db_model(shift=shift, domain_model=schedule)
+                schedules_db.append(schedule_db)         
+            async with self.session_factory() as session:
+                session.add_all(schedules_db)
+                await session.commit()
+                for schedule_db in schedules_db: await session.refresh(schedule_db)  
+            for schedule_db, schedule in zip(schedules_db, schedules):
+                schedule.id = schedule_db.id                 
+            return len(schedules_db)
+        return 0   
     
     async def update_incidents(
         self,

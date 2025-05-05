@@ -1,9 +1,11 @@
 from datetime import datetime
+from uuid import UUID
 from Alc_Detection.Application.Requests.Models import Person
 from Alc_Detection.Domain.Shelf.DeviationManagment.Incident import Incident
 from Alc_Detection.Domain.Shelf.Calibration import Calibration
 from Alc_Detection.Domain.Shelf.Planogram import Planogram
 from Alc_Detection.Domain.Shelf.Realogram import Realogram
+from Alc_Detection.Domain.Store.PersonManagment.Post import Post
 from Alc_Detection.Domain.Store.PersonManagment.Shift import Shift
 from Alc_Detection.Domain.Store.Shelving import Shelving
 
@@ -28,7 +30,10 @@ class Store:
     
     @property
     def employee(self) -> list[Person]:
-        raise NotImplementedError()
+        employees = []
+        for shift in self._shifts:
+            employees.extend(shift.actual_employees)
+        return employees
     
     @property
     def realograms(self) -> list[Realogram]:
@@ -46,12 +51,35 @@ class Store:
                 incidents.append(incident)
         return incidents
     
+    @property
+    def shifts(self) -> list[Shift]:
+        return self._shifts
+    
     @property 
     def actual_shift(self):
         for shift in self._shifts:
             if shift.do_work_at(datetime.now()):
                 return shift
         return None
+    
+    def find_shift_by_id(self, id: UUID) -> Shift:
+        for shift in self._shifts:
+            if shift.id == id:
+                return shift
+        return None
+    
+    def get_work_place(self, person: Person) -> tuple[Shift, Post]:
+        for shift in self._shifts:
+            if shift.is_employee(person):
+                post = shift.get_post(person)
+                return (shift, post)
+        return None
+    
+    def is_employee(self, person: Person):
+        for shift in self._shifts:
+            if shift.is_employee(person):
+                return True
+        return False
     
     def get_actual_planogram_by(self, shelving: Shelving) -> Planogram:
         for calib in self.calibrations:
@@ -65,6 +93,10 @@ class Store:
                 return calib
         return None   
      
+    def add_shifts(self, *shifts: Shift):
+        for shift in shifts:
+            self._shifts.append(shift)
+    
     def add_incident(self, *incidents: Incident):
         for incident in incidents:            
             self._incidents.append(incident)
@@ -75,9 +107,16 @@ class Store:
     def add_realogram(self, realogram: Realogram):
         self._realograms.append(realogram)
     
-    def add_person(self, person: Person):
-        if not self.is_employee(person):
-            self._persons.append(person)
+    def add_person(self, shift: Shift, persons: list[Person], posts: list[Post]):
+        if len(persons) != len(posts):
+            raise ValueError((persons, posts))
+        if not shift in self._shifts:
+            raise ValueError(shift)
+        shift.new_shift_assignments(
+            assignment_date=datetime.now(),
+            persons=persons,
+            posts=posts
+        )
             
     def is_employee(self, person: Person) -> bool:
         return person in self.employee

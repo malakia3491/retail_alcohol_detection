@@ -13,6 +13,6 @@ class ShiftPostPerson(BaseModel):
     person_id = Column(UUID(as_uuid=True), ForeignKey("persons.id"), nullable=False)
     shift_assignment_id = Column(UUID(as_uuid=True), ForeignKey("shift_assignments.id"), nullable=False)
 
-    shift_post = relationship("ShiftPost", back_populates="shift_post_persons")
-    person = relationship("Person", back_populates="shift_post_persons")    
-    shift_assignment = relationship("ShiftAssignment", back_populates="shift_post_persons")
+    shift_post = relationship("ShiftPost", back_populates="shift_post_persons", lazy='selectin')
+    person = relationship("Person", back_populates="shift_post_persons", lazy='selectin')    
+    shift_assignment = relationship("ShiftAssignment", back_populates="shift_post_persons", lazy='selectin')

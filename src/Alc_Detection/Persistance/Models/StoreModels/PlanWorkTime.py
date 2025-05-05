@@ -15,4 +15,4 @@ class PlanWorkTime(BaseModel):
     date_to = Column(DateTime, nullable=False)
 
     plan_days = relationship("PlanSchedule", back_populates="plan_work_time", cascade="all, delete-orphan", lazy='selectin')
-    store_shift = relationship("StoreShift", back_populates="schedule", lazy='selectin')
+    store_shift = relationship("StoreShift", back_populates="schedules", lazy='selectin')

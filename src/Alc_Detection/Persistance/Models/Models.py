@@ -12,6 +12,8 @@ from Alc_Detection.Persistance.Models.StoreModels.ShiftPostPerson import ShiftPo
 from Alc_Detection.Persistance.Models.StoreModels.PlanSchedule import PlanSchedule
 from Alc_Detection.Persistance.Models.StoreModels.PlanWorkTime import PlanWorkTime
 from Alc_Detection.Persistance.Models.StoreModels.Product import Product
+from Alc_Detection.Persistance.Models.StoreModels.Permition import Permition
+from Alc_Detection.Persistance.Models.StoreModels.PostPermition import PostPermition
 
 from Alc_Detection.Persistance.Models.ShelfDetection.PlanogramProduct import PlanogramProduct
 from Alc_Detection.Persistance.Models.ShelfDetection.Planogram import Planogram

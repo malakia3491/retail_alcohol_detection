@@ -21,4 +21,4 @@ class StoreShift(BaseModel):
     incidents = relationship("Incident", back_populates="store_shift", cascade="all, delete-orphan", lazy='selectin')
     shift_posts = relationship("ShiftPost", back_populates="store_shift", cascade="all, delete-orphan", lazy='selectin')
     
-    schedule = relationship("PlanWorkTime", back_populates="store_shift", lazy='selectin')
+    schedules = relationship("PlanWorkTime", back_populates="store_shift", cascade="all, delete-orphan", lazy='selectin')

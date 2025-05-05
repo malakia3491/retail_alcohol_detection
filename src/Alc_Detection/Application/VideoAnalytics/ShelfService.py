@@ -13,7 +13,7 @@ from ultralytics.engine.results import Results
 
 from Alc_Detection.Application.Requests.Models import CalibrationBoxesResponse
 from Alc_Detection.Application.Requests.Requests import AddCalibrationBoxesRequest
-from Alc_Detection.Application.StoreInformation.Services.StoreService import StoreService
+from Alc_Detection.Application.StoreInformation.Services.StoreServiceFacade import StoreService
 from Alc_Detection.Application.VideoAnalytics.ImageProcessing.ImageSaver import ImageSaver
 from Alc_Detection.Domain.Entities import *
 from Alc_Detection.Application.VideoAnalytics.Exceptions.Exceptions import NotCorrectImageFile

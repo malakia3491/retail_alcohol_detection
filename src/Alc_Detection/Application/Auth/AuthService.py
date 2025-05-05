@@ -5,20 +5,20 @@ from passlib.context import CryptContext
 
 from Alc_Detection.Application.Auth.Exceptions import InactiveUserException, InvalidCredentialsException, InvalidTokenException
 from Alc_Detection.Application.Auth.TokenService import TokenService
-from Alc_Detection.Application.Requests.Models import AuthResponse, Person
-from Alc_Detection.Application.StoreInformation.Services.StoreService import StoreService
+from Alc_Detection.Application.Requests.Models import AuthResponse, Permition, Person, Store, Shift, Post
+from Alc_Detection.Application.StoreInformation.Services.PersonManagementService import PersonManagementService
+from Alc_Detection.Application.StoreInformation.Services.StoreServiceFacade import StoreService
 from Alc_Detection.Persistance.Repositories.PersonRepository import PersonRepository
-from Alc_Detection.Persistance.Repositories.StoreRepository import StoreRepository
 
 class AuthService:
     def __init__(
         self,
-        store_service: StoreService,
+        store_serivce: StoreService,
         user_repository: PersonRepository,
         token_service: TokenService,
         pwd_context: CryptContext
     ):
-        self._store_service = store_service
+        self._store_serivce = store_serivce
         self.user_repo = user_repository
         self.token_service = token_service
         self.pwd_context = pwd_context
@@ -54,12 +54,27 @@ class AuthService:
                 raise InvalidTokenException("Invalid token payload")
             
             user = await self.user_repo.get(UUID(user_id))
-            store = self._store_service.get_work_place(user)
+            store, shift, post = await self._store_serivce.get_work_place(user)
+            if store:
+                store_id = store.id
+                shift_id = shift.id
+                post_response = Post(
+                    id=post.id, 
+                    name=post.name,
+                    permitions=[Permition(id=permition.id, name=permition.name) for permition in post.permitions]
+                )
+            else:
+                store_id = None
+                shift_id = None 
+                post_response = None
             return Person(
                 id=user.id,
                 telegram_id=user.telegram_id,
                 name=user.name,
-                is_worker=user.is_worker,
+                store_id=store_id,
+                shift_id=shift_id,
+                post=post_response,
+                is_store_worker=user.is_store_worker,
                 is_active=user.is_active,
                 access_token=token,
             )

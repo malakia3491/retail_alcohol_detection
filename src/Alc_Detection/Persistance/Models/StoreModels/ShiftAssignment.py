@@ -10,4 +10,4 @@ class ShiftAssignment(BaseModel):
     
     assignment_date = Column(DateTime, nullable=False)
 
-    shift_post_persons = relationship("ShiftPostPerson", back_populates="shift_assignment")
+    shift_post_persons = relationship("ShiftPostPerson", back_populates="shift_assignment", lazy='selectin')

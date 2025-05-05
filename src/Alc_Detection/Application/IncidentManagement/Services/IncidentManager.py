@@ -2,7 +2,7 @@ from datetime import datetime
 
 from Alc_Detection.Application.IncidentManagement.Interfaces.Messenger import Messenger
 from Alc_Detection.Application.IncidentManagement.Settings import Settings
-from Alc_Detection.Application.StoreInformation.Services.StoreService import StoreService
+from Alc_Detection.Application.StoreInformation.Services.StoreServiceFacade import StoreService
 from Alc_Detection.Domain.Shelf.DeviationManagment.Deviation import Deviation
 from Alc_Detection.Domain.Shelf.DeviationManagment.EmptyDeviation import EmptyDeviation
 from Alc_Detection.Domain.Shelf.DeviationManagment.Incident import Incident

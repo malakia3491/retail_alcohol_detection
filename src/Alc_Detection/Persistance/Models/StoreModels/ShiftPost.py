@@ -1,6 +1,6 @@
 from sqlalchemy.orm import relationship
 from sqlalchemy import (
-    Column, Time, ForeignKey
+    Column, Time, ForeignKey, Integer
 )
 from sqlalchemy.dialects.postgresql import UUID
 
@@ -11,7 +11,8 @@ class ShiftPost(BaseModel):
     
     store_shift_id = Column(UUID(as_uuid=True), ForeignKey("store_shifts.id"), nullable=False)
     post_id = Column(UUID(as_uuid=True), ForeignKey("posts.id"), nullable=False)
-
-    store_shift = relationship("StoreShift", back_populates="shift_posts")
-    post = relationship("Post", back_populates="shift_posts")
+    count = Column(Integer)
+    
+    store_shift = relationship("StoreShift", back_populates="shift_posts", lazy='selectin')
+    post = relationship("Post", back_populates="shift_posts", lazy='selectin')
     shift_post_persons = relationship("ShiftPostPerson", back_populates="shift_post", cascade="all, delete-orphan", lazy='selectin')  

@@ -19,13 +19,14 @@ from Alc_Detection.Application.IncidentManagement.Services.IncidentManager impor
 from Alc_Detection.Application.Mappers.Mappers import *
 from Alc_Detection.Application.Mappers.CalibrationMapper import CalibrationMapper
 from Alc_Detection.Application.Mappers.ProductMatrixMapper import ProductMatrixMapper
-from Alc_Detection.Application.StoreInformation.Services.StoreService import StoreService
+from Alc_Detection.Application.StoreInformation.Services.StoreServiceFacade import StoreService
 from Alc_Detection.Application.VideoAnalytics.Dependencies import *
 
 from Alc_Detection.Application.VideoAnalytics.ImageProcessing.ImageSaver import ImageSaver
 from Alc_Detection.Persistance.Cache.InMemoryCache import InMemoryCache
 from Alc_Detection.Persistance.Configs.ConfigReader import IniConfigReader
 from Alc_Detection.Persistance.Repositories.EmbeddingModelRepository import EmbeddingModelRepository
+from Alc_Detection.Persistance.Repositories.PermitionRepository import PermitionRepository
 from Alc_Detection.Persistance.Repositories.PostRepository import PostRepository
 from Alc_Detection.Persistance.Repositories.Repositories import *
 from Alc_Detection.Persistance.db_ini import DbInitializer
@@ -55,7 +56,9 @@ class ModulesInitializer:
         planogram_mapper, \
         planogram_order_mapper, \
         store_mapper, \
-        post_mapper = self._initialize_mappers()
+        post_mapper, \
+        shift_mapper, \
+        schedule_mapper= self._initialize_mappers()
                  
         store_repository, \
         shelving_repository, \
@@ -63,19 +66,40 @@ class ModulesInitializer:
         person_repository, \
         product_repository, \
         embedding_model_repository, \
-        post_repository = await self._initialize_db(
+        post_repository,\
+        permition_repository = await self._initialize_db(
                                     product_mapper=product_mapper, 
                                     person_mapper=person_mapper, 
                                     shelving_mapper=shelving_mapper,  
                                     planogram_mapper=planogram_mapper, 
                                     planogram_order_mapper=planogram_order_mapper,
                                     store_mapper=store_mapper,
-                                    post_mapper=post_mapper)
+                                    post_mapper=post_mapper,
+                                    schedule_mapper=schedule_mapper,
+                                    shift_mapper=shift_mapper)
         
         image_saver = ImageSaver(product_crop_save_dir=self.config_reader.get_save_dir_path("product_crops"),
                                  realogram_save_dir=self.config_reader.get_save_dir_path("realogram_snapshots"),
                                  planogram_save_dir=self.config_reader.get_save_dir_path("planogram_images"))
-        image_generator = ProductMatrixImageGenerator(image_saver=image_saver)
+        image_generator = ProductMatrixImageGenerator(image_saver=image_saver)          
+                
+        # messanger = await self._initialize_notification_module()
+        messanger = None
+        
+        store_service = self._initialize_store_module(
+            shift_mapper=shift_mapper,
+            schedule_mapper=schedule_mapper,
+            post_repository=post_repository,
+            image_generator=image_generator,
+            store_repository=store_repository,
+            shelving_repository=shelving_repository,
+            person_repository=person_repository,
+            planogram_order_repository=planogram_order_repository,
+            product_repository=product_repository,
+            product_matrix_mapper=product_matrix_mapper,
+            planogram_order_mapper=planogram_order_mapper,
+            planogram_mapper=planogram_mapper,
+            permition_repository=permition_repository)
         
         token_service = TokenService(
             secret_key=self.config_reader.get_secret(),
@@ -86,24 +110,10 @@ class ModulesInitializer:
         auth_service = AuthService(
             user_repository=person_repository,
             token_service=token_service,
-            pwd_context=pwd_context
+            pwd_context=pwd_context,
+            store_serivce=store_service
         )
-        self._initialize_auth_module(auth_service=auth_service)        
-                
-        # messanger = await self._initialize_notification_module()
-        messanger = None
-        
-        store_service = self._initialize_store_module(
-            post_repository=post_repository,
-            image_generator=image_generator,
-            store_repository=store_repository,
-            shelving_repository=shelving_repository,
-            person_repository=person_repository,
-            planogram_order_repository=planogram_order_repository,
-            product_repository=product_repository,
-            product_matrix_mapper=product_matrix_mapper,
-            planogram_order_mapper=planogram_order_mapper,
-            planogram_mapper=planogram_mapper)
+        self._initialize_auth_module(auth_service=auth_service) 
         
         settings = Settings(faces_count=1)
         incident_manager = self._initialize_incident_management(
@@ -130,9 +140,14 @@ class ModulesInitializer:
                              planogram_mapper, 
                              planogram_order_mapper,
                              store_mapper,
-                             post_mapper):
+                             post_mapper,
+                             shift_mapper,
+                             schedule_mapper):
         session_factory = await self.db_starter.initialize()
-      
+        permition_repository = PermitionRepository(
+            session_factory=session_factory,
+            cache=InMemoryCache()
+        )
         post_repository = PostRepository(session_factory=session_factory,
                                          post_mapper=post_mapper,
                                          cache=InMemoryCache())
@@ -140,7 +155,9 @@ class ModulesInitializer:
                                                               cache=InMemoryCache(),)
         store_repository =  StoreRepository(session_factory=session_factory,
                                             cache=InMemoryCache(),
-                                            store_mapper=store_mapper)
+                                            store_mapper=store_mapper,
+                                            shift_mapper=shift_mapper,
+                                            schedule_mapper=schedule_mapper)
         shelving_repository =  ShelvingRepository(session_factory=session_factory,
                                                   cache=InMemoryCache(),
                                                   shelving_mapper=shelving_mapper)
@@ -157,9 +174,9 @@ class ModulesInitializer:
                                               cache=InMemoryCache(),
                                               product_mapper=product_mapper)
         
-        reps = [product_repository, store_repository, shelving_repository, planogram_order_repository, person_repository, embedding_model_repository, post_repository]
+        reps = [product_repository, store_repository, shelving_repository, planogram_order_repository, person_repository, embedding_model_repository, post_repository, permition_repository]
         for rep in reps: await rep.on_start()        
-        return store_repository, shelving_repository, planogram_order_repository, person_repository, product_repository, embedding_model_repository, post_repository
+        return store_repository, shelving_repository, planogram_order_repository, person_repository, product_repository, embedding_model_repository, post_repository, permition_repository
     
     def _initialize_auth_module(
         self,
@@ -239,7 +256,10 @@ class ModulesInitializer:
                                  product_matrix_mapper: ProductMatrixMapper,
                                  planogram_order_mapper: PlanogramOrderMapper,
                                  image_generator: ProductMatrixImageGenerator,
-                                 planogram_mapper: PlanogramMapper):   
+                                 planogram_mapper: PlanogramMapper,
+                                 shift_mapper: ShiftMapper,
+                                 schedule_mapper: ScheduleMapper,
+                                 permition_repository: PermitionRepository):   
         store_service = StoreService(store_repository=store_repository,
                                      shelving_repository=shelving_repository,
                                      person_repository=person_repository,
@@ -249,17 +269,23 @@ class ModulesInitializer:
                                      product_matrix_mapper=product_matrix_mapper,
                                      image_generator=image_generator,
                                      post_repository=post_repository,
-                                     planogram_mapper=planogram_mapper)
-        controller = StoreController(storeService=store_service)
+                                     planogram_mapper=planogram_mapper,
+                                     schedule_mapper=schedule_mapper,
+                                     shift_mapper=shift_mapper,
+                                     permition_repository=permition_repository)
+        controller = StoreController(store_service=store_service)
         self.controllers_dict["store_controller"] = (controller, ("/retail", "retail"))
         return store_service
         
     def _initialize_mappers(self):
+        schedule_mapper = ScheduleMapper()
         post_mapper = PostMapper()
         schedule_mapper = ScheduleMapper()
         shelving_mapper = ShelvingMapper()
         person_mapper = PersonMapper()
         product_mapper = ProductMapper()
+        shift_mapper = ShiftMapper(person_mapper=person_mapper,
+                                   schedule_mapper=schedule_mapper)
         product_matrix_mapper = ProductMatrixMapper(product_mapper=product_mapper)
         shift_mapper = ShiftMapper(person_mapper=person_mapper,
                                    schedule_mapper=schedule_mapper)
@@ -277,4 +303,4 @@ class ModulesInitializer:
         planogram_order_mapper = PlanogramOrderMapper(person_mapper=person_mapper,
                                                       shelving_mapper=shelving_mapper,
                                                       planogram_mapper=planogram_mapper)
-        return product_mapper, person_mapper, shelving_mapper, product_matrix_mapper, planogram_mapper, planogram_order_mapper, store_mapper, post_mapper         
+        return product_mapper, person_mapper, shelving_mapper, product_matrix_mapper, planogram_mapper, planogram_order_mapper, store_mapper, post_mapper, shift_mapper, schedule_mapper         

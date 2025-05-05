@@ -6,14 +6,14 @@ class Person:
         name: str,
         telegram_id: str, 
         password_hash: str = None,      
-        is_worker=True,
+        is_store_worker=True,
         is_active=True,
         id=None,
     ):
         self.id = id
         self.name = name
         self.telegram_id = telegram_id
-        self.is_worker = is_worker
+        self.is_store_worker = is_store_worker
         self.is_active = is_active
         self.password_hash = password_hash 
 
@@ -22,4 +22,4 @@ class Person:
                self.telegram_id == value.telegram_id
                
     def __hash__(self):
-        return hash((self.name, self.telegram_id, self.is_worker))
+        return hash((self.name, self.telegram_id, self.is_store_worker))

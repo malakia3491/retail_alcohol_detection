@@ -4,7 +4,7 @@
     <div v-if="user">
       <p><strong>Имя:</strong> {{ user.name }}</p>
       <p><strong>Telegram ID:</strong> {{ user.telegram_id }}</p>
-      <p><strong>Статус:</strong> {{ user.is_worker ? 'Сотрудник' : 'Клиент' }}</p>
+      <p><strong>Статус:</strong> {{ user.is_store_worker ? 'Сотрудник' : 'Клиент' }}</p>
       <button @click="logout" class="logout-button">Выйти</button>
     </div>
     <div v-else-if="loading" class="loading">Загрузка данных...</div>

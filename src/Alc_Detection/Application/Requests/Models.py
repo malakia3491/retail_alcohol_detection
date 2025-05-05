@@ -1,20 +1,41 @@
 from uuid import UUID
 from pydantic import BaseModel, HttpUrl
-from datetime import datetime
+from datetime import datetime, time
 from typing import Dict, List, Optional
+
+class ScheduleDay(BaseModel):
+    id: Optional[UUID] = None
+    schedule_id: Optional[UUID] = None
+    date_day: datetime
+
+class Schedule(BaseModel):
+    id: Optional[UUID] = None
+    store_shift_id: Optional[UUID] = None
+    holidays: List[ScheduleDay]
+    write_day: datetime
+    date_from: datetime
+    date_to: datetime
 
 class Shift(BaseModel):
     id: Optional[UUID] = None
     store_id: UUID
+    schedule: Optional[Schedule] = None
+    work_time_start: time
+    work_time_end: time
+    break_time_start: time
+    break_time_end: time
     name: str
-    post_ids: List[UUID]    
+    staff_positions: dict[UUID, int]    
+
+class Permition(BaseModel):
+    id: Optional[UUID] = None
+    name: str
 
 class Post(BaseModel):
     id: Optional[UUID] = None
     name: str
-    is_regular: bool
-    is_administrative: bool
-
+    permitions: List[UUID]
+    
 class CalibrationBox(BaseModel):
     xyxy: List[int]
     conf: float
@@ -62,7 +83,10 @@ class Person(BaseModel):
     id: Optional[UUID] = None
     telegram_id: Optional[str] = None
     name: str
-    is_worker: Optional[bool] = None
+    is_store_worker: Optional[bool] = None
+    post: Optional[Post] = None
+    shift_id: Optional[UUID] = None
+    store_id: Optional[UUID] = None
     is_active: Optional[bool] = None
     access_token: Optional[str] = None
 

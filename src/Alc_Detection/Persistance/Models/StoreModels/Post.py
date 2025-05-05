@@ -10,7 +10,6 @@ class Post(BaseModel):
     __tablename__ = "posts"
     
     name = Column(String, nullable=False)
-    is_regular = Column(Boolean, nullable=False)
-    is_administrative = Column(Boolean, nullable=False)
 
     shift_posts = relationship("ShiftPost", back_populates="post", cascade="all, delete-orphan", lazy='selectin')
+    post_permitions = relationship("PostPermition", back_populates="post", cascade="all, delete-orphan", lazy='selectin')

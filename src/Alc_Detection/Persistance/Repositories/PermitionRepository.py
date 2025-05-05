@@ -4,34 +4,30 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List 
 from sqlalchemy.exc import NoResultFound
 
-from Alc_Detection.Application.Mappers.PostMapper import PostMapper
-from Alc_Detection.Domain.Entities import Product
 from Alc_Detection.Domain.Store.PersonManagment.Permition import Permition
 from Alc_Detection.Domain.Store.PersonManagment.Post import Post
 from Alc_Detection.Persistance.Exceptions import ObjectNotFound
 from Alc_Detection.Persistance.Cache.CacheBase import CacheBase
-from Alc_Detection.Persistance.Models.Models import Post as PostModel
+from Alc_Detection.Persistance.Models.Models import Permition as PermitionModel
 
-class PostRepository:
+class PermitionRepository:
     def __init__(self, 
                  session_factory: AsyncSession,
-                 cache: CacheBase,
-                 post_mapper: PostMapper):
+                 cache: CacheBase):
         self.session_factory = session_factory
-        self._post_mapper = post_mapper
         self._cache = cache
 
     async def on_start(self):
         async with self.session_factory() as session:                
-            result = await session.execute(select(PostModel))
+            result = await session.execute(select(PermitionModel))
             for row in result.scalars().all():
-                post = self._post_mapper.map_to_domain_model(row)          
-                self._cache.put(row.id, post)
+                permition = Permition(id=row.id, name=row.name)        
+                self._cache.put(row.id, permition)
 
-    async def get_all(self) -> list[Product]:
+    async def get_all(self) -> list[Permition]:
         return self._cache.get_all()    
     
-    async def get(self, *ids: UUID) -> Post | List[Post]:
+    async def get(self, *ids: UUID) -> Permition | List[Permition]:
         in_cache_ids, not_in_cache_ids = self._cache.in_cache(*ids)
         objs = [self._cache.get(id) for id in in_cache_ids]
         if len(not_in_cache_ids) == 0: 
@@ -40,8 +36,8 @@ class PostRepository:
         else: 
             async with self.session_factory() as session:
                 try:
-                    stm_result = await session.execute(select(PostModel).where(PostModel.id.in_(not_in_cache_ids)))
-                    db_objs = [self._post_mapper.map_to_domain_model(model) for model in stm_result.scalars().all()]
+                    stm_result = await session.execute(select(PermitionModel).where(PermitionModel.id.in_(not_in_cache_ids)))
+                    db_objs = [Permition(id=model.id, name=model.name) for model in stm_result.scalars().all()]
                     for db_obj in db_objs:
                         self._cache.put(db_obj.id, db_obj)
                         objs.append(db_obj)
@@ -50,11 +46,11 @@ class PostRepository:
         if len(objs) == 1: return objs[0]
         else: return objs
     
-    async def add(self, *new_objs: Product) -> int:
+    async def add(self, *new_objs: Permition) -> int:
         objs = []
         for new_obj in new_objs:                
             if self._cache.contains(new_obj): continue
-            objs.append(self._post_mapper.map_to_db_model(new_obj))
+            objs.append(PermitionModel(name=new_obj.name))
             
         if len(objs) == 0: return 0
         async with self.session_factory() as session:
@@ -62,5 +58,5 @@ class PostRepository:
             await session.commit()
             for obj in objs: await session.refresh(obj)  
         for obj in objs:
-            self._cache.put(obj.id, self._post_mapper.map_to_domain_model(obj))
+            self._cache.put(obj.id, Permition(id=obj.id, name=obj.name))
         return len(objs)

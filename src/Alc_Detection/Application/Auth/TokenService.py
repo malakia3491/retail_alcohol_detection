@@ -22,7 +22,7 @@ class TokenService:
         token_data = {
             "sub": str(user.id),
             "name": user.name,
-            "is_worker": user.is_worker,
+            "is_store_worker": user.is_store_worker,
             "exp": expire
         }
         return jwt.encode(

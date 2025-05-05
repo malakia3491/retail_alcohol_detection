@@ -1,17 +1,27 @@
 from uuid import UUID
 
+from Alc_Detection.Domain.Store.PersonManagment.Permition import Permition
+
 class Post:
     def __init__(
         self,
         name: str,
-        is_regular: bool,
-        is_administrative: bool,
+        permitions: list[Permition]=[],
         id: UUID=None
     ): 
         self.id = id
         self.name = name
-        self.is_regular = is_regular
-        self.is_administrative = is_administrative
+        self._permitions = permitions
+    
+    @property
+    def permitions(self) -> list[Permition]:
+        return self._permitions
+    
+    def is_allowed(self, *permitions: Permition) -> bool:
+        for permition in permitions:
+            if not permition in self._permitions:
+                return True
+        return False             
         
     def __str__(self) -> str:
         return self.name
@@ -20,3 +30,6 @@ class Post:
         if not isinstance(other, Post):
             return False
         return self.name == other.name
+    
+    def __hash__(self):
+        return hash(self.name)

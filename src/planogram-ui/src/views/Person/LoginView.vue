@@ -63,10 +63,10 @@
               access_token: user.access_token,
               telegram_id: user.telegram_id,
               is_active: user.is_active,
-              is_worker: user.is_worker
+              is_store_worker: user.is_store_worker
             }));
             
-            const redirectPath = user.is_worker ? '/home' : '/login';
+            const redirectPath = user.is_active ? '/home' : '/login';
             await router.push(redirectPath);
           }
         } catch (e) {
