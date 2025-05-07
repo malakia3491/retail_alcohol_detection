@@ -29,6 +29,12 @@ class PlanogramOrderRepository:
         async with self.session_factory() as session:
             result = await session.execute(select(PlanogramOrderModel))
             [self._cache.put(row.id, self._planogram_order_mapper.map_to_domain_model(row)) for row in result.scalars().all()]
+        orders = await self.get_all()
+        for order in orders:
+            for _, planograms in order.shelving_assignments.items():
+                for planogram in planograms:
+                    planogram.planogram_order = order
+                
     
     async def get_all(self) -> list[PlanogramOrder]:
         return self._cache.get_all()
@@ -52,8 +58,9 @@ class PlanogramOrderRepository:
     async def get_resolved_orders(self) -> list[PlanogramOrder]:
         if len(self._cache) == 0:
             return []
+        all_orders = sorted(self._cache.get_all(), key=lambda o: o.create_date, reverse=True)
         orders = []        
-        for order in self._cache.get_all():
+        for order in all_orders:
             if order.is_resolved and not order.is_declined:
                 orders.append(order)
         return orders   

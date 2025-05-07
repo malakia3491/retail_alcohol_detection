@@ -8,4 +8,6 @@ export interface ProductBox {
     product?: Product;
     pos_x: number;
     is_empty?: boolean;
+    is_incorrect_position?: boolean
+    cords?: number[]
   }

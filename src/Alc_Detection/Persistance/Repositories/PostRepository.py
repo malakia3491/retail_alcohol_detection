@@ -28,7 +28,7 @@ class PostRepository:
                 post = self._post_mapper.map_to_domain_model(row)          
                 self._cache.put(row.id, post)
 
-    async def get_all(self) -> list[Product]:
+    async def get_all(self) -> list[Post]:
         return self._cache.get_all()    
     
     async def get(self, *ids: UUID) -> Post | List[Post]:
@@ -50,7 +50,7 @@ class PostRepository:
         if len(objs) == 1: return objs[0]
         else: return objs
     
-    async def add(self, *new_objs: Product) -> int:
+    async def add(self, *new_objs: Post) -> int:
         objs = []
         for new_obj in new_objs:                
             if self._cache.contains(new_obj): continue

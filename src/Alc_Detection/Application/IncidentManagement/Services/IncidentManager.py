@@ -9,6 +9,7 @@ from Alc_Detection.Domain.Shelf.DeviationManagment.Incident import Incident
 from Alc_Detection.Domain.Shelf.DeviationManagment.IncongruityDeviation import incongruityDeviation
 from Alc_Detection.Domain.Shelf.ProductMatrix.ProductBox import ProductBox
 from Alc_Detection.Application.Notification.Message import Message
+from Alc_Detection.Domain.Store.PersonManagment.Permition import Permition
 from Alc_Detection.Domain.Store.PersonManagment.Shift import Shift
 from Alc_Detection.Domain.Store.Store import Store
 from Alc_Detection.Domain.Shelf.Realogram import Realogram
@@ -28,15 +29,15 @@ class IncidentManager:
         self._post_repository = post_repository
         self._settings = settings
         self._messenger = messenger        
-    
+        
     async def on_start(self):
         posts = await self._post_repository.get_all()
         self._regular_posts = []
         self._administrative_posts = []
         for post in posts:
-            if post.is_regular:
+            if Permition("layout:incidents:standard") in post.permitions:
                 self._regular_posts.append(post)
-            elif post.is_administrative:
+            elif Permition("layout:incidents:no-product") in post.permitions:
                 self._administrative_posts.append(post)
     
     async def handle_realogram(
@@ -44,19 +45,23 @@ class IncidentManager:
         store: Store,
         realogram: Realogram
     ) -> None:
-        unresolved_incidents = store.unresolved_incidents                         
+        unresolved_incidents = store.get_unresolved_incidents_by_shelving(realogram.shelving)
+        print(f"ВСЕ ИНЦИДЕНТЫ {store.incidents}")
+        print(f"Нерешённые инциденты {unresolved_incidents}")   
+        print("Deviations", realogram.deviation_count)                    
         if realogram.deviation_count < 0:
             for incident in unresolved_incidents:
-                incident.resolve(datetime.now().time()) 
+                incident.resolve(datetime.now()) 
         else:
             now = datetime.now()       
             shift = store.actual_shift
+            print("SHIFT", shift)
             update_incidents = []            
             for incident in unresolved_incidents:
                 for deviation in incident.deviations:
                     if not deviation._product_box in realogram.empties and \
                        not deviation._product_box in realogram.inconsistencies:
-                        deviation.elimination_time = now.time()
+                        deviation.elimination_time = now
                         if incident not in update_incidents:
                             update_incidents.append(incident)
                                                                                                                     
@@ -66,18 +71,22 @@ class IncidentManager:
                 realogram=realogram,
                 unresolved_incidents=unresolved_incidents
             )
+            
+            print("New incidents", new_incidents)
             if len(update_incidents) > 0:
                 await self._store_repository.update_incidents(
-                    store=store, *update_incidents)
+                    store, now, *update_incidents)
             if len(new_incidents) > 0:
                 store.add_incident(*new_incidents)
                 await self._store_repository.add_incident(
-                    store=store, *new_incidents)
+                    store, *new_incidents)
             
                 messages = [Message(realogram_img_src=realogram.image_source,
                                     planogram_img_src=realogram.planogram.img_src,
-                                    incident=incident
+                                    incident=incident,
+                                    user_ids=[person.telegram_id for person in incident.responsible_employees]
                             ) for incident in new_incidents]
+                print(messages)
                 # for message in messages:
                 #     self._messenger.send(
                 #         ids=[],
@@ -117,7 +126,8 @@ class IncidentManager:
     ) -> Incident:
         deviations: list[EmptyDeviation] = []
         not_enough_product_deviations: list[EmptyDeviation] = []
-        for deviation in realogram.empties:                            
+        for deviation in realogram.empties:
+            print("current deviation:", deviation)                            
             for incident in unresolved_incidents:
                 if not incident.contains(deviation):
                     actual_product_count = await self._store_service.get_actual_product_count(
@@ -131,6 +141,18 @@ class IncidentManager:
                     if not deviation.is_enough_product:
                         not_enough_product_deviations.append(deviation)                        
                     else: deviations.append(deviation)   
+            if not unresolved_incidents:
+                actual_product_count = await self._store_service.get_actual_product_count(
+                    store=store,
+                    product=deviation.product
+                )
+                plan_product_count = realogram.planogram.get_need_product_count(
+                    product=deviation.product
+                ) 
+                deviation.is_enough_product = actual_product_count >= plan_product_count
+                if not deviation.is_enough_product:
+                    not_enough_product_deviations.append(deviation)                        
+                else: deviations.append(deviation)   
         
         admin_incident = None
         new_incident = None
@@ -145,7 +167,7 @@ class IncidentManager:
         if len(not_enough_product_deviations) > 0:
             administators = shift.get_actual_employees_by(self._administrative_posts)
             admin_incident = Incident(
-                send_time=datetime.now().time(),
+                send_time=datetime.now(),
                 realogram=realogram,
                 deviations=not_enough_product_deviations,
                 responsible_employees=administators,
@@ -163,11 +185,13 @@ class IncidentManager:
             for incident in unresolved_incidents:
                 if not incident.contains(deviation):                   
                     deviations.append(deviation)
-       
+            if not unresolved_incidents:
+                deviations.append(deviation)
+                
         if len(deviations) >= self._settings.FACES_COUNT:
             employees = shift.get_actual_employees_by(self._regular_posts)
             new_incident = Incident(
-                send_time=datetime.now().time(),
+                send_time=datetime.now(),
                 realogram=realogram,
                 deviations=deviations,
                 responsible_employees=employees,

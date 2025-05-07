@@ -24,11 +24,6 @@ class PrototypeClassifier(DistanceClassifier):
                 torch.nn.functional.normalize(proto, p=2, dim=1).T
             )
         }
-                        # 1 - cosine_similarity(
-                        #                 x.unsqueeze(1),  # (batch_size, 1, features)
-                        #                 proto.unsqueeze(0),  # (1, n_prototypes, features)
-                        #                 dim=2  # Сравниваем по оси features
-                        #             )
         
     def to(self, device):
         self.device = device

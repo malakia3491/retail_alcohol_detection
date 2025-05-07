@@ -53,6 +53,10 @@ class ProductBoxState(abc.ABC):
         pass
     
     @abc.abstractmethod
+    def cords(self, product_box: ProductBox):
+        pass
+    
+    @abc.abstractmethod
     def copy(self,  product_box: ProductBox) -> ProductBox:
         pass
     

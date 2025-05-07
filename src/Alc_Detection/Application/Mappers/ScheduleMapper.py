@@ -17,7 +17,9 @@ class ScheduleMapper:
 
         schedule = Schedule(
             date_assignment=db_model.write_date,
-            holidays=holidays
+            holidays=holidays,
+            date_from=db_model.date_from,
+            date_to=db_model.date_to
         )
         return schedule
     
@@ -31,13 +33,15 @@ class ScheduleMapper:
 
         schedule = Schedule(
             date_assignment=req_model.write_day,
-            holidays=holidays
+            holidays=holidays,
+            date_from=req_model.date_from,
+            date_to=req_model.date_to
         )
         return schedule
     
     def map_to_db_model(self, shift: Shift, domain_model: Schedule) -> ScheduleModel:
         if domain_model is None: return None
-        if not isinstance(domain_model, ScheduleModel):
+        if not isinstance(domain_model, Schedule):
             raise ValueError(domain_model)        
         plan_days = []
         for day in domain_model.days:
@@ -47,8 +51,8 @@ class ScheduleMapper:
             plan_days.append(plan_day)        
         return ScheduleModel(
             store_shift_id=shift.id,
-            write_date=domain_model.write_date,
-            date_from=domain_model.date_from,
-            date_to=domain_model.date_to,
+            write_date=domain_model.date_assignment,
+            date_from=domain_model.period.start,
+            date_to=domain_model.period.end,
             plan_days=plan_days,  
         )

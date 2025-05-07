@@ -60,4 +60,9 @@ class InvalidPlanogramUnapprove(HTTPException):
         super().__init__(  
             status.HTTP_400_BAD_REQUEST,
             f"Invalid unapprove planogram with id {planogram_id}")
-        
+
+class PlanogramDoesNotHaveCalibration(HTTPException):
+    def __init__(self, shelving_id: str):
+        super().__init__(  
+            status.HTTP_400_BAD_REQUEST,
+            f"Shelving with id {shelving_id} does not have calibrated planogram!")

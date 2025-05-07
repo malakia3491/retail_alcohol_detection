@@ -92,6 +92,7 @@ import { get_shelving } from '@/api/shelvings';
 import { get_products } from '@/api/products';
 import { add_planogram } from '@/api/planograms';
 import { base_url } from '@/api/config';
+import { authStore } from '@/auth/store';
 
 export default defineComponent({
   name: 'CreatePlanogramView',
@@ -114,6 +115,7 @@ export default defineComponent({
         product_id: '',
         pos_x: i,
         is_empty: true,
+        is_incorrect_position: false
       } as ProductBox));
     }
 
@@ -175,6 +177,7 @@ export default defineComponent({
         pos_x: idx,
         is_empty: false,
         product: p,
+        is_incorrect_position: false,
         planogram_product: plan,
       } as ProductBox;
       plan.count = row.product_boxes.filter(b => !b.is_empty && b.product_id === p.id).length;
@@ -205,6 +208,7 @@ export default defineComponent({
                 product_id: box.product_id,
                 pos_x: box.pos_x,
                 is_empty: false,
+                is_incorrect_position: false
               } as ProductBox);
             }
           }
@@ -216,7 +220,7 @@ export default defineComponent({
       try {
         await add_planogram({
           order_id: orderId,
-          author_id: 'df9240d1-23dc-4756-9d23-caefcadc6c19',
+          author_id: authStore.user!.id!,
           shelving_id: shelvingId,
           product_matrix: matrix.value,
         } as AddPlanogramRequest);

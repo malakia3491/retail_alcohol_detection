@@ -99,7 +99,8 @@ class ModulesInitializer:
             product_matrix_mapper=product_matrix_mapper,
             planogram_order_mapper=planogram_order_mapper,
             planogram_mapper=planogram_mapper,
-            permition_repository=permition_repository)
+            permition_repository=permition_repository,
+            store_mapper=store_mapper)
         
         token_service = TokenService(
             secret_key=self.config_reader.get_secret(),
@@ -122,6 +123,7 @@ class ModulesInitializer:
             post_rep=post_repository,
             messanger=messanger,
             settings=settings)
+        await incident_manager.on_start()
         
         await self._initialize_videoanalytics(
             image_saver=image_saver,
@@ -259,7 +261,8 @@ class ModulesInitializer:
                                  planogram_mapper: PlanogramMapper,
                                  shift_mapper: ShiftMapper,
                                  schedule_mapper: ScheduleMapper,
-                                 permition_repository: PermitionRepository):   
+                                 permition_repository: PermitionRepository,
+                                 store_mapper: StoreMapper):   
         store_service = StoreService(store_repository=store_repository,
                                      shelving_repository=shelving_repository,
                                      person_repository=person_repository,
@@ -272,7 +275,8 @@ class ModulesInitializer:
                                      planogram_mapper=planogram_mapper,
                                      schedule_mapper=schedule_mapper,
                                      shift_mapper=shift_mapper,
-                                     permition_repository=permition_repository)
+                                     permition_repository=permition_repository,
+                                     store_mapper=store_mapper)
         controller = StoreController(store_service=store_service)
         self.controllers_dict["store_controller"] = (controller, ("/retail", "retail"))
         return store_service

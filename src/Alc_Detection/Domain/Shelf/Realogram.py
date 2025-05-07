@@ -31,6 +31,10 @@ class Realogram:
         return self._img_src
     
     @property
+    def image_url(self) -> str:
+        return "/static/realograms/"+self._img_src
+    
+    @property
     def planogram(self) -> Planogram:
         return self._planogram
 
@@ -64,8 +68,9 @@ class Realogram:
             r_boxes = r_shelf.boxes
             p_boxes = p_shelf.boxes
             for r_box, p_box in zip(r_boxes, p_boxes):
-                if not r_box.is_empty and r_box.product == p_box.product:
-                    accordance_count += 1
+                if r_box.product == p_box.product:
+                    if not r_box.is_empty:
+                        accordance_count += 1
                 else:
                     deviations.append(incongruityDeviation(
                         product_box=r_box,

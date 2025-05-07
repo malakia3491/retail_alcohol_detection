@@ -4,9 +4,9 @@ from datetime import date, datetime
 from fastapi import APIRouter, Form, HTTPException, status
 from fastapi.responses import JSONResponse
 
-from Alc_Detection.Application.Requests.Models import Planogram, PlanogramOrder, PlanogramOrdersPageResponse, PlanogramOrdersResponse, ProductsResponse, ShelvingsResponse
+from Alc_Detection.Application.Requests.Models import Planogram, PlanogramOrder, PlanogramOrdersPageResponse, PlanogramOrdersResponse, PlanogramsResponse, ProductsResponse, RealogramsResponse, ShelvingsResponse, StoresResponse
 from Alc_Detection.Application.Requests.Requests import \
-(AddPermitionsRequest, AddPersonsRequest, AddPlanogramRequest, AddPostsRequest, AddProductsRequest, AddScheduleRequest, AddShelvingsRequest, AddShiftsRequest,
+(AddPermitionsRequest, AddPersonsRequest, AddPlanogramRequest, AddPostsRequest, AddProductsRequest, AddScheduleRequest, AddShelvingsRequest, AddShiftAssignment, AddShiftsRequest,
  AddStoresRequest, ApprovePlanogramRequest, DismissPersonRequest, UpdatePersonRequest)
 from Alc_Detection.Application.StoreInformation.Services.StoreServiceFacade import StoreService
 
@@ -111,6 +111,77 @@ class StoreController:
                                   self.add_permitions,
                                   methods=["POST"],
                                   status_code=status.HTTP_200_OK)
+        self.router.add_api_route("/planograms/actual/",
+                                  self.get_last_agreed_planograms,
+                                  methods=["GET"],
+                                  status_code=status.HTTP_200_OK,
+                                  response_model=PlanogramsResponse)
+        self.router.add_api_route("/realograms/actual/{store_id}",
+                                  self.get_last_realograms,
+                                  methods=["GET"],
+                                  status_code=status.HTTP_200_OK,
+                                  response_model=RealogramsResponse)
+        self.router.add_api_route("/stores/",
+                                  self.get_stores,
+                                  methods=["GET"],
+                                  status_code=status.HTTP_200_OK,
+                                  response_model=StoresResponse)
+        self.router.add_api_route("/shift_assignmetns/",
+                                  self.add_shift_assignment,
+                                  methods=["POST"],
+                                  status_code=status.HTTP_200_OK)
+    
+    async def add_shift_assignment(
+        self,
+        request: AddShiftAssignment
+    ) -> str:
+        try:
+            response = await self.store_service.add_shift_assignment(request)
+            return response
+        except HTTPException as he:
+            raise he
+        except Exception as e:
+            return JSONResponse(
+                content={"message": f"Internal error: {str(e)}"},
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)            
+    
+    async def get_stores(
+        self,
+    ) -> StoresResponse:
+        try:
+            response = await self.store_service.get_stores()
+            return response
+        except HTTPException as he:
+            raise he
+        except Exception as e:
+            return JSONResponse(
+                content={"message": f"Internal error: {str(e)}"},
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)         
+    
+    async def get_last_realograms(
+        self,
+        store_id: UUID
+    ) -> RealogramsResponse:        
+        try:
+            response = await self.store_service.get_actual_realograms(store_id)
+            return response
+        except HTTPException as he:
+            raise he
+        except Exception as e:
+            return JSONResponse(
+                content={"message": f"Internal error: {str(e)}"},
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)         
+            
+    async def get_last_agreed_planograms(self) -> PlanogramsResponse:
+        try:
+            response = await self.store_service.get_last_agreed_planograms()
+            return response
+        except HTTPException as he:
+            raise he
+        except Exception as e:
+            return JSONResponse(
+                content={"message": f"Internal error: {str(e)}"},
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)              
     
     async def add_permitions(self, request: AddPermitionsRequest) -> dict:
         try:

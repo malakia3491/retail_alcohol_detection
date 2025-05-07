@@ -24,31 +24,34 @@ class InitState(ProductBoxState):
         product_box._conf = conf
         
     def sort_point(self, product_box: ProductBox):
-        raise PositionsNotLoaded()
+        return None
     
     def position(self, product_box: ProductBox):
-        raise PositionsNotLoaded() 
+        return None
     
     def height(self, product_box: ProductBox):
-        raise CoordinatesNotLoaded()
+        return None
     
     def width(self, product_box: ProductBox):
-        raise CoordinatesNotLoaded()
+        return None
     
     def width_point(self, product_box: ProductBox):
-        raise CoordinatesNotLoaded()
+        return None
     
     def center(self, product_box: ProductBox):
-        raise CoordinatesNotLoaded()
+        return None
     
     def p_min(self):
-        raise CoordinatesNotLoaded()
+        return None
     
     def p_max(self):
-        raise CoordinatesNotLoaded()
+        return None
+    
+    def cords(self, product_box: ProductBox):
+        return None
     
     def conf(self, product_box: ProductBox):
-        raise CoordinatesNotLoaded()
+        return None
     
     def copy(self, product_box: ProductBox):
         return ProductBox(product=product_box.product.copy(),

@@ -7,7 +7,7 @@ from Alc_Detection.Domain.Exceptions.Exceptions import *
 
 class PositionsLoadedState(ProductBoxState):
     def load_positions(self, product_box: ProductBox, position: Point) -> None:
-        raise InvalidStateError("Позиции уже загружены!")
+        product_box._position = position
     
     def load_coordinates(self, product_box: ProductBox, xyxy: list, conf: float) -> None:
         product_box.set_state(CompleteState())
@@ -23,34 +23,32 @@ class PositionsLoadedState(ProductBoxState):
     def sort_point(self, product_box: ProductBox):
         return product_box._position
     
-    
     def position(self, product_box: ProductBox):
         return product_box._position
     
-    
     def height(self, product_box: ProductBox):
-        raise CoordinatesNotLoaded()
-    
-    
+        return None
+       
     def width(self, product_box: ProductBox):
-        raise CoordinatesNotLoaded()
-    
+        return None
     
     def center(self, product_box: ProductBox):
-        raise CoordinatesNotLoaded()
-    
+        return None
     
     def width_point(self, product_box: ProductBox):
-        raise CoordinatesNotLoaded()
+        return None
     
     def p_min(self, product_box: ProductBox):
-        raise CoordinatesNotLoaded()
+        return None
     
     def p_max(self, product_box: ProductBox):
-        raise CoordinatesNotLoaded()
+        return None
+
+    def cords(self, product_box: ProductBox):
+        return None
     
     def conf(self, product_box: ProductBox):
-        raise CoordinatesNotLoaded()
+        return None
     
     def copy(self, product_box: ProductBox):
         new_p_box = ProductBox(product=product_box.product.copy(),
@@ -67,5 +65,5 @@ class PositionsLoadedState(ProductBoxState):
                product_box.position == other.position
     
     def str(self, product_box: ProductBox) -> str:        
-        string = f'EmptyBox' if product_box.is_empty else f'[{product_box.product.name}]({product_box.position})'
+        string = f'EmptyBox({product_box.position}))' if product_box.is_empty else f'[{product_box.product.name}]({product_box.position})'
         return string

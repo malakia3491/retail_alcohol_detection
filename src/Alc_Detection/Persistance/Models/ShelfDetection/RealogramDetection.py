@@ -1,6 +1,6 @@
 from sqlalchemy.orm import relationship
 from sqlalchemy import (
-    Column, ForeignKey, Boolean, Float
+    Column, DateTime, ForeignKey, Boolean, Float
 )
 from sqlalchemy.dialects.postgresql import UUID
 from pgvector.sqlalchemy import Vector
@@ -18,6 +18,7 @@ class RealogramDetection(BaseModel):
     is_empty = Column(Boolean)
     conf = Column(Float)
     is_incorrect_pos = Column(Boolean)
+    elimination_time = Column(DateTime, nullable=True)
     
     snapshot = relationship("RealogramSnapshot", back_populates="detections", lazy='selectin')
     incident = relationship("Incident", back_populates="detections", lazy='selectin')

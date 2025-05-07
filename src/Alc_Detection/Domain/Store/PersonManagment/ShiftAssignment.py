@@ -2,17 +2,18 @@ from datetime import datetime
 
 from Alc_Detection.Domain.Store.PersonManagment.Person import Person
 from Alc_Detection.Domain.Store.PersonManagment.Post import Post
+from Alc_Detection.Domain.Store.PersonManagment.StaffPosition import StaffPosition
 
 class ShiftAssignment:
     def __init__(
         self,
         assignment_date: datetime,
-        asignments: dict[Person, Post],
+        assignments: dict[Person, StaffPosition],
         id: str=None
     ):
         self.id = id
         self._assignment_date = assignment_date
-        self._assignments = asignments
+        self._assignments = assignments
         
     @property
     def date(self):

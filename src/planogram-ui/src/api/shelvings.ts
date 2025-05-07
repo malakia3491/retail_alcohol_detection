@@ -5,10 +5,10 @@ import type { Shelving, ShelvingsResponse } from '@/types'
 
 const shelvings_url = `${base_url}/retail/shelvings`;
 
-export const get_shelvings = async (): Promise<Array<Shelving> | null> => {
+export const get_shelvings = async (): Promise<Shelving[]> => {
     const url = `${shelvings_url}/`;
     const result = await axios.get<ShelvingsResponse>(url,);
-    const shelvings = result.data.shelvings as Array<Shelving>;
+    const shelvings = result.data.shelvings as Shelving[];
     return shelvings;
   };
 

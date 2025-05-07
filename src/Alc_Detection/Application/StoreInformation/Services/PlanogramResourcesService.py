@@ -10,7 +10,7 @@ from Alc_Detection.Domain.Shelf.Calibration import Calibration
 from Alc_Detection.Domain.Shelf.ProductMatrix.CalibrationBox import CalibrationBox
 from Alc_Detection.Application.StoreInformation.Exceptions.Exceptions import (
      CalibrationException, IncorrectPlanogram,
-     InvalidObjectId, InvalidPlanogramApprove, InvalidPlanogramUnapprove,
+     InvalidObjectId, InvalidPlanogramApprove, InvalidPlanogramUnapprove, PlanogramDoesNotHaveCalibration,
     ShelvingIsNotAssigned,
      ShelvingPlanogramIsAgreed
 )
@@ -18,7 +18,9 @@ from Alc_Detection.Application.Requests.Requests import (
     ApprovePlanogramRequest,
     ProductMatrix as ProductMatrixModel)
 from Alc_Detection.Application.Requests.Models import (
-    Planogram as PlanogramModel
+    Planogram as PlanogramModel,
+    PlanogramDataResponse,
+    PlanogramsResponse
 )
 from Alc_Detection.Application.Mappers.PlanogramOrderMapper import PlanogramOrderMapper
 from Alc_Detection.Application.Mappers.ProductMatrixMapper import ProductMatrixMapper
@@ -68,8 +70,10 @@ class PlanogramResourcesService:
             store = await self._store_repository.get(store_id)   
             shelving = await self._shelving_repository.get(shelving_id)
                 
-            actual_planogram = store.get_actual_planogram_by(shelving).copy()
-            calibration = store.get_planogram_calibration(actual_planogram)
+            actual_planogram = store.get_actual_planogram_by(shelving)
+            if not actual_planogram:
+                raise PlanogramDoesNotHaveCalibration(shelving_id)
+            calibration = store.get_planogram_calibration(actual_planogram.copy())
             actual_planogram.set_calibrations(calibration.calibrations_boxes)
             return actual_planogram
         except ValueError as ex:
@@ -77,13 +81,14 @@ class PlanogramResourcesService:
         except InvalidCalibrationBoxes as ex:
             raise CalibrationException(actual_planogram.id)              
        
-    async def get_last_agreed_planograms(self) -> list[Planogram]:
+    async def get_last_agreed_planograms(self) -> PlanogramsResponse:
         try:
             shelvings = await self._shelving_repository.get_all()
             orders = await self._planogram_order_repository.get_resolved_orders()  
             not_found_shelvings = set(shelvings)
             
-            last_agreed_planograms: dict[Shelving, Planogram] = {}            
+            last_agreed_planograms: dict[Shelving, Planogram] = {}
+            data: list[PlanogramDataResponse] = []         
             for order in orders:
                 not_found_shelvings = not_found_shelvings.difference(set(last_agreed_planograms.keys()))
                 for shelving in not_found_shelvings:                    
@@ -91,9 +96,13 @@ class PlanogramResourcesService:
                         planogram = order.get_agreed_planogram(shelving)
                         if planogram:
                             last_agreed_planograms[shelving] = planogram
+                            data.append(PlanogramDataResponse(shelving_id=shelving.id, planogram_id=planogram.id, order_id=order.id))
                         else: continue
-                    else: continue                                         
-            return last_agreed_planograms
+                    else: continue      
+            response = PlanogramsResponse(
+                planogram_data=data
+            )                                           
+            return response
         except Exception as ex:
             raise ex
     
@@ -159,6 +168,7 @@ class PlanogramResourcesService:
                                          shelfs_len=len(planogram_matrix.shelfs))
             
             products = await self._product_repository.get(*[product.product_id for product in planogram_matrix.products])
+            if not isinstance(products, list): products = [*products]
             product_matrix, product_count = \
                 self._product_matrix_mapper.map_response_to_domain_model(request_model=planogram_matrix,
                                                                          products=products)        

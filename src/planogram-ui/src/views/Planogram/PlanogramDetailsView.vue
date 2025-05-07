@@ -66,6 +66,13 @@
         >
           {{ isProcessing ? 'Отмена...' : 'Отменить согласование' }}
         </button>
+        <button
+         class="btn-edit"
+         @click="edit"
+         :disabled="isProcessing"
+         >
+         Редактировать
+         </button>
       </div>
     </section>
   
@@ -81,6 +88,7 @@
   import { approve_planogram } from '@/api/planograms';
   import { formatDate } from '@/utils/date_utils';
   import { base_url } from '@/api/config';
+  import { authStore } from '@/auth/store';
   
   export default defineComponent({
     name: 'PlanogramDetailView',
@@ -103,7 +111,7 @@
         if (!planogram.value) return;
         isProcessing.value = true;
         try {
-          await approve_planogram('df9240d1-23dc-4756-9d23-caefcadc6c19', orderId, planId);
+          await approve_planogram(authStore.user!.id!, orderId, planId);
           await load();
         } catch {
           alert('Ошибка при согласовании');
@@ -116,7 +124,7 @@
         if (!planogram.value) return;
         isProcessing.value = true;
         try {
-            await unapprove_planogram('df9240d1-23dc-4756-9d23-caefcadc6c19', orderId, planId);
+            await unapprove_planogram(authStore.user!.id!, orderId, planId);
           await load();
         } catch {
           alert('Ошибка при отмене согласования');
@@ -124,7 +132,18 @@
           isProcessing.value = false;
         }
       };
-  
+      
+      const edit = () => {
+        if (!planogram.value) return;
+        router.push({
+          name: 'UpdatePlanogram',
+          params: {
+            order_id: orderId,
+            planogram_id: planId,
+          }
+        });
+      }
+
       return {
         base_url,
         planogram,
@@ -132,6 +151,7 @@
         formatDate,
         approve,
         revoke,
+        edit
       };
     },
   });
@@ -217,6 +237,14 @@
   .btn-revoke:disabled {
     opacity: 0.6;
     cursor: not-allowed;
+  }
+  .btn-edit {
+    padding: 0.75rem 1.5rem;
+    border: none;
+    border-radius: 6px;
+    background: var(--primary);
+    color: #fff;
+    cursor: pointer;
   }
   </style>
   

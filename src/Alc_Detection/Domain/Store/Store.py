@@ -16,13 +16,19 @@ class Store:
                  realograms:list[Realogram]=[],
                  incidents:list[Incident]=[],
                  shifts:list[Shift]=[],
+                 is_office:bool=False,
                  id=None):
         self.id = id
         self.name = name 
+        self._is_office = is_office
         self._realograms = sorted(realograms, key=lambda r: r.create_date, reverse=True)
         self._incidents = sorted(incidents, key=lambda i: i.send_time, reverse=True)
         self._shifts = shifts
         self._calibrations = calibrations
+
+    @property
+    def is_office(self) -> bool:
+        return self._is_office
 
     @property
     def calibrations(self) -> list[Calibration]:
@@ -43,11 +49,10 @@ class Store:
     def incidents(self) -> list[Incident]:
         return self._incidents
     
-    @property
-    def unresolved_incidents(self) -> list[Incident]:
+    def get_unresolved_incidents_by_shelving(self, shelving: Shelving) -> list[Incident]:
         incidents = []
         for incident in self.incidents:
-            if not incident.is_resolved:
+            if incident.shelving == shelving and not incident.is_resolved:
                 incidents.append(incident)
         return incidents
     
@@ -61,6 +66,27 @@ class Store:
             if shift.do_work_at(datetime.now()):
                 return shift
         return None
+    
+    def find_shift_by_id(
+        self,
+        shift_id: str
+    ) -> Shift:
+        for shift in self._shifts:
+            if shift.id == shift_id:
+                return shift
+        return None 
+    
+    def get_actual_realograms(
+        self,
+        shelvings: list[Shelving]
+    ) -> dict[Shelving, Realogram]:
+        actual_realograms: dict[Shelving, Realogram] = {}
+        for shelving in shelvings:
+            for realogram in self.realograms:
+                if realogram.shelving == shelving:
+                    actual_realograms[shelving] = realogram
+                    break
+        return actual_realograms
     
     def find_shift_by_id(self, id: UUID) -> Shift:
         for shift in self._shifts:
@@ -99,13 +125,13 @@ class Store:
     
     def add_incident(self, *incidents: Incident):
         for incident in incidents:            
-            self._incidents.append(incident)
+            self._incidents.insert(0, incident)
     
     def add_calibration(self, calibration: Calibration):
-        self._calibrations.append(calibration)
+        self._calibrations.insert(0, calibration)
     
     def add_realogram(self, realogram: Realogram):
-        self._realograms.append(realogram)
+        self._realograms.insert(0, realogram)
     
     def add_person(self, shift: Shift, persons: list[Person], posts: list[Post]):
         if len(persons) != len(posts):

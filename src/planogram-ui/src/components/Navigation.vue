@@ -33,12 +33,12 @@
         </button>
         <ul class="subnav" v-show="openItem === 'shelves'">
           <li>
-            <router-link to="/shelves/planograms" class="subnav-link">
+            <router-link to="/planograms/actual" class="subnav-link">
               Планограммы
             </router-link>
           </li>
           <li>
-            <router-link to="/shelves/realograms" class="subnav-link">
+            <router-link to="/realograms/actual" class="subnav-link">
               Реалограммы
             </router-link>
           </li>

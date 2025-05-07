@@ -25,7 +25,7 @@ class Shift(BaseModel):
     break_time_start: time
     break_time_end: time
     name: str
-    staff_positions: dict[UUID, int]    
+    staff_positions: Optional[dict[UUID, int]] = None    
 
 class Permition(BaseModel):
     id: Optional[UUID] = None
@@ -34,7 +34,7 @@ class Permition(BaseModel):
 class Post(BaseModel):
     id: Optional[UUID] = None
     name: str
-    permitions: List[UUID]
+    permitions: List[Permition]
     
 class CalibrationBox(BaseModel):
     xyxy: List[int]
@@ -52,6 +52,7 @@ class CalibrationBox(BaseModel):
 class Store(BaseModel):
     id: Optional[UUID] = None
     name: str
+    is_office: bool
 
 class Product(BaseModel):
     id: Optional[UUID] = None
@@ -68,8 +69,10 @@ class ProductBox(BaseModel):
     id: Optional[UUID] = None
     product_id: UUID
     planogram_product: Optional[PlanogramProduct] = None
+    cords: Optional[List[float]] = None
     pos_x: int
     is_empty: bool
+    is_incorrect_position: bool
 
 class Shelf(BaseModel):
     position: int
@@ -85,8 +88,8 @@ class Person(BaseModel):
     name: str
     is_store_worker: Optional[bool] = None
     post: Optional[Post] = None
-    shift_id: Optional[UUID] = None
-    store_id: Optional[UUID] = None
+    shift: Optional[Shift] = None
+    store: Optional[Store] = None
     is_active: Optional[bool] = None
     access_token: Optional[str] = None
 
@@ -97,6 +100,7 @@ class Shelving(BaseModel):
 
 class Planogram(BaseModel):
     id: Optional[UUID] = None
+    order_id: Optional[UUID] = None
     author: Person
     shelving: Shelving
     create_date: datetime
@@ -114,6 +118,14 @@ class PlanogramOrder(BaseModel):
     shelvings: List[Shelving]
     is_declined: bool
     status: Optional[str] = None
+
+class PlanogramDataResponse(BaseModel):
+    shelving_id: UUID
+    planogram_id: UUID
+    order_id: UUID
+
+class PlanogramsResponse(BaseModel):
+    planogram_data: List[PlanogramDataResponse]
     
 class PlanogramOrdersResponse(BaseModel):
     planogram_orders: List[PlanogramOrder]
@@ -136,3 +148,19 @@ class AuthResponse(BaseModel):
     access_token: str
     token_type: str
     user_id: UUID
+    
+class Realogram(BaseModel):
+    id: Optional[UUID]
+    planogram_id: UUID
+    shelving_id: UUID
+    create_date: datetime
+    img_src: str
+    product_matrix: ProductMatrix
+    accordance: float
+    empties_count: int
+
+class StoresResponse(BaseModel):
+    stores: List[Store]
+
+class RealogramsResponse(BaseModel):
+    realograms: List[Realogram]

@@ -29,12 +29,17 @@ async def async_main():
         "Alc_Detection",
         "Persistance",
         "Images",
-        "ProductCrops"
+    )
+
+    app.mount(
+        "/static/realograms",
+        StaticFiles(directory=os.path.join(IMAGES_PATH, "Realograms")),
+        name="realograms_snapshots"
     )
 
     app.mount(
         "/static/products",
-        StaticFiles(directory=IMAGES_PATH),
+        StaticFiles(directory=os.path.join(IMAGES_PATH, "ProductCrops")),
         name="product_images"
     )
     

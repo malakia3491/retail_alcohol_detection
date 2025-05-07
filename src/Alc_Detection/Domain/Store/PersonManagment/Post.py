@@ -26,6 +26,9 @@ class Post:
     def __str__(self) -> str:
         return self.name
     
+    def __repr__(self) -> str:
+        return self.__str__()           
+    
     def __eq__(self, other) -> bool:
         if not isinstance(other, Post):
             return False

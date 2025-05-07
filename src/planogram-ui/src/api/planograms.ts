@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 import {base_url} from '@/api/config';
-import type { Planogram, AddPlanogramRequest, ApprovePlanogramRequest } from '@/types'  
+import type { Planogram, AddPlanogramRequest, ApprovePlanogramRequest, PlanogramsResponse } from '@/types'  
 
 const planogram_url = `${base_url}/retail/planograms`;
 
@@ -14,6 +14,17 @@ export const add_planogram = async (request: AddPlanogramRequest): Promise<strin
     });
     const response = result.data;
     return response;
+}
+
+export const get_actual_planograms = async () : Promise<PlanogramsResponse> => {
+    const url = `${planogram_url}/actual/`;
+    const result = await axios.get<PlanogramsResponse>(url, {
+        headers: {
+            'Content-Type': 'application/json',
+        },
+    });
+    const response = result.data as PlanogramsResponse
+    return response  
 }
 
 export const get_planogram = async (order_id: string, planogram_id: string): Promise<Planogram | null> => {

@@ -17,7 +17,7 @@ class ProductResourcesService:
         store: Store,
         product: Product
     ) -> int:
-        raise NotImplementedError()
+        return True
     
     async def get_products(self) -> ProductsResponse:
         try:

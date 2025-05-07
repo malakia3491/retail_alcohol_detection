@@ -1,3 +1,4 @@
+from datetime import datetime
 from uuid import UUID
 from Alc_Detection.Application.Mappers.ScheduleMapper import ScheduleMapper
 from Alc_Detection.Application.Mappers.ShiftMapper import ShiftMapper
@@ -13,6 +14,7 @@ from Alc_Detection.Application.Mappers.Mappers import StoreMapper
 from Alc_Detection.Domain.Shelf.Calibration import Calibration
 from Alc_Detection.Domain.Store.PersonManagment.Schedule import Schedule
 from Alc_Detection.Domain.Store.PersonManagment.Shift import Shift
+from Alc_Detection.Domain.Store.PersonManagment.ShiftAssignment import ShiftAssignment
 from Alc_Detection.Persistance.Cache.CacheBase import CacheBase
 from Alc_Detection.Persistance.Exceptions import ObjectUpdateException
 from Alc_Detection.Persistance.Models.Models import Calibration as CalibrationModel
@@ -22,6 +24,8 @@ from Alc_Detection.Persistance.Models.Models import RealogramSnapshot as Realogr
 from Alc_Detection.Persistance.Models.Models import RealogramDetection as RealogramDetectionModel
 from Alc_Detection.Persistance.Models.Models import Incident as IncidentModel
 from Alc_Detection.Persistance.Models.Models import StoreShift as ShiftModel
+from Alc_Detection.Persistance.Models.Models import ShiftAssignment as ShiftAssignmentModel
+from Alc_Detection.Persistance.Models.StoreModels.ShiftPostPerson import ShiftPostPerson
 
 class StoreRepository:
     def __init__(self,
@@ -39,10 +43,18 @@ class StoreRepository:
     async def on_start(self):
         async with self.session_factory() as session:
             result = await session.execute(select(StoreModel))
-            [self._cache.put(row.id, self._store_mapper.map_to_domain_model(row)) for row in result.scalars().all()]
+            [self._cache.put(row.id, self._store_mapper.map_to_domain_model(row)) for row in result.scalars().all()]         
          
     async def get_all(self) -> list[Store]:
         return self._cache.get_all()
+    
+    async def get_all_not_office(self) -> list[Store]:
+        stores = self._cache.get_all()
+        result = []
+        for store in stores:
+            if not store.is_office:
+                result.append(store)
+        return result
     
     async def get(self, *ids: UUID) -> Store | List[Store]:
         in_cache_ids, not_in_cache_ids = self._cache.in_cache(*ids)
@@ -62,6 +74,35 @@ class StoreRepository:
                     raise ValueError(f"Записи с айди {not_in_cache_ids} не найдены")
         if len(objs) == 1: return objs[0]
         else: return objs
+    
+    async def add_shift_assignment(
+        self,
+        store: Store,
+        *new_objs: ShiftAssignment
+    ) -> int:
+        if self._cache.contains(store):
+            shift_assignments_db = []
+            for shift_assignment in new_objs:
+                shift_post_persons = []
+                for person, staff_position in shift_assignment.assignments.items():
+                    shift_post_persons.append(ShiftPostPerson(
+                        shift_post_id = staff_position.id,
+                        person_id = person.id
+                    ))
+                shift_assignment_db = ShiftAssignmentModel(
+                    assignment_date=shift_assignment.date,
+                    shift_post_persons=shift_post_persons        
+                )
+                shift_assignments_db.append(shift_assignment_db)
+                            
+            async with self.session_factory() as session:
+                session.add_all(shift_assignments_db)
+                await session.commit()
+                [await session.refresh(shift_assignment_db) for shift_assignment_db in shift_assignments_db]
+                for shift_assignment_db, shift_assignmnet in zip(shift_assignments_db, new_objs):
+                    shift_assignmnet.id = shift_assignment_db.id                
+            return len([shift_assignments_db])
+        return 0 
     
     async def add(self, *new_objs: Store) -> int:
         objs = []
@@ -116,7 +157,7 @@ class StoreRepository:
                     detections.append(RealogramDetectionModel(
                         product_id=box.product.id,
                         matrix_cords=box.position.to_list(),
-                        box_cords=[box.p_min.x, box.p_min.y, box.p_max.x, box.p_max.y],
+                        box_cords=box.cords,
                         conf=box.conf,
                         is_empty=box.is_empty,
                         is_incorrect_pos=box.is_incorrect_position
@@ -151,19 +192,20 @@ class StoreRepository:
             for incident in incidents:
                 detections = []
                 for deviation in incident.deviations:
-                    detections = RealogramDetectionModel(
+                    detection = RealogramDetectionModel(
                         id=deviation.product_box.id,
                         realogram_id=incident.realogram.id,
-                        product_id=deviation.product,
+                        product_id=deviation.product.id,
                         matrix_cords=deviation.position.to_list(),
                         box_cords=deviation.product_box.cords,
                         is_empty=deviation.product_box.is_empty,
                         is_incorrect_pos=deviation.product_box.is_incorrect_position,
                     )
+                    detections.append(detection)
                 incident_db = IncidentModel(
                     store_shift_id=incident.shift.id,
                     send_time=incident.send_time,
-                    message=incident.send_time,
+                    message=incident.build_message_text(),
                     detections=detections                
                 )
                 incidents_db.append(incident_db)
@@ -192,7 +234,7 @@ class StoreRepository:
                 await session.commit()
                 for incident in shifts_db: await session.refresh(incident)  
             for shift_db, shift in zip(shifts_db, shifts):
-                shift.id = shift.id                 
+                shift.id = shift_db.id                 
             return len([shifts_db])
         return 0     
     
@@ -219,6 +261,7 @@ class StoreRepository:
     async def update_incidents(
         self,
         store: Store,
+        elimination_time: datetime,
         *incidents: Incident 
     ) -> int:
         if self._cache.contains(store):
@@ -226,10 +269,10 @@ class StoreRepository:
             try:
                 async with self.session_factory() as session:
                     stmt = (
-                        update(IncidentModel)
-                        .where(IncidentModel.id.in_(target_ids))
-                        .values(elimination_time=incidents[0].elimination_time)
-                    )                    
+                        update(RealogramDetectionModel)
+                        .where(RealogramDetectionModel.incident_id.in_(target_ids))
+                        .values(elimination_time=elimination_time)
+                    )
                     await session.execute(stmt)
                     await session.commit()
             except Exception as ex:

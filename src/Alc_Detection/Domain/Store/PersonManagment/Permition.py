@@ -12,3 +12,10 @@ class Permition:
     @property
     def name(self):
         return self._name
+    
+    def __eq__(self, value):
+        return isinstance(value, Permition) and \
+               self.name == value.name
+               
+    def __hash__(self):
+        return hash(self.name)

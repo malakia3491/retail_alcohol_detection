@@ -83,7 +83,7 @@ class ProductBox:
     
     @property
     def cords(self) -> list[int]:
-        return [self.p_min.x, self.p_min.y, self.p_max.x, self.p_max.y]
+        return self._state.cords(self)
     
     @property
     def p_min(self) -> Point:

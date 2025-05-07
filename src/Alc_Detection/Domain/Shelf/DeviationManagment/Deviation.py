@@ -81,3 +81,6 @@ class Deviation:
         return isinstance(value, Deviation) and \
                self.position == value.position
                
+    def __hash__(self):
+        return hash(self.position)
+               

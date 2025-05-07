@@ -32,7 +32,7 @@ class Incident:
         result = f"Время обнаружения {self.realogram.create_date.time()}\n"+\
                  f"Стеллаж: {self.realogram.shelving.name}"+\
                  f"{self._define_title()}\n"
-        for id, string in shelfs_strs:                            
+        for id, string in shelfs_strs.items():                            
             result += f"Полка {id+1}: " + string + "\n"                
             
         return result
@@ -58,12 +58,20 @@ class Incident:
     
     @property
     def elimination_time(self):
-        deviations = sorted(
-            self._deviations,
-            key=lambda d: d.elimination_time,
-            reverse=True
-        )        
-        return deviations[0].elimination_time
+        is_resolved = True
+        for deviation in self.deviations:
+            if deviation.elimination_time is None:
+                is_resolved = False
+                break
+        
+        if self.deviations and is_resolved:
+            deviations = sorted(
+                self._deviations,
+                key=lambda d: d.elimination_time,
+                reverse=True
+            )        
+            return deviations[0].elimination_time
+        return None
     
     @property
     def reaction_time(self): 
@@ -104,3 +112,6 @@ class Incident:
     
     def _contains(self, deviation: Deviation):
         return deviation in self.deviations
+    
+    def __str__(self):
+        return f"{self.shift} {self.deviation_count} {self.send_time}"

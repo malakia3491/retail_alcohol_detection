@@ -27,6 +27,15 @@ class Planogram:
         self.approver = approver
         self.approval_date = approval_date
         self.img_src = img_src
+        self._order = None
+
+    @property
+    def planogram_order(self):
+        return self._order
+    
+    @planogram_order.setter
+    def planogram_order(self, value):
+        self._order = value
         
     def get_need_product_count(self, product: Product):
         return self.product_count[product]

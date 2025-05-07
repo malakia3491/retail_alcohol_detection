@@ -68,3 +68,12 @@ class AddPostsRequest(BaseModel):
     
 class AddPermitionsRequest(BaseModel):
     permitions: list[Permition]
+    
+class StaffPositionAssignment(BaseModel):
+    person_id: UUID
+    post_id: UUID
+
+class AddShiftAssignment(BaseModel):
+    store_id: UUID
+    shift_id: UUID
+    assignments: List[StaffPositionAssignment]    

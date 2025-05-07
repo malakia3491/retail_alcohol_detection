@@ -115,14 +115,15 @@ class ImageSaver:
 
             file_name = f"{uuid.uuid4()}{file_ext}"
             save_path = os.path.join(full_save_dir, file_name)
-
+            short_path = os.path.join(save_dir, file_name)
+            
             self.save_tensor_as_image(tensor=image,
                                       save_path=save_path)
 
             if not os.path.exists(save_path):
                 raise FileNotFoundError(f"Файл не был создан: {save_path}")
 
-            return save_path
+            return save_path, short_path
 
         except Exception as ex:
             error_msg = (f"Ошибка сохранения изображения: {str(ex)}\n"

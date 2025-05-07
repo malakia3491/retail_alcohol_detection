@@ -69,7 +69,7 @@ class ShelfService:
             embeddings = self.bottle_classifier.get_embeddings_from(images).cpu().numpy()                 
             product_images = []
             for img, emb, file in zip(images, embeddings, image_files):
-                path = self._image_saver.save(image_file=file,
+                path, _ = self._image_saver.save(image_file=file,
                                               image=img,
                                               save_dir=str(product_id),
                                               obj_type=Product)
@@ -127,8 +127,8 @@ class ShelfService:
             product_matrix = self._get_realogram(product_matrix,
                                                  planogram.product_matrix,
                                                  img.shape)
-            
-            path = self._image_saver.save(image_file=image_file,
+
+            _, path = self._image_saver.save(image_file=image_file,
                                           image=img,
                                           save_dir=str(datetime.now().date()),
                                           obj_type=Realogram)
@@ -145,6 +145,7 @@ class ShelfService:
                                                     store=store,
                                                     realogram=realogram
             )
+            
             return f"Successfully. {result_count} shelving image is handled"
         return "Persons have been found on image. It does not handled"                          
     
@@ -185,10 +186,10 @@ class ShelfService:
             realogram = planogram.copy()
             realogram.is_empty = True
             return realogram
-        self._find_empty_shelfs(product_matrix=realogram,
+        realogram = self._find_empty_shelfs(product_matrix=realogram,
                                 planogram=planogram,
                                 img_shape=img_shape)
-        self._find_empty_boxes(product_matrix=realogram,
+        realogram = self._find_empty_boxes(product_matrix=realogram,
                                planogram=planogram,
                                img_shape=img_shape)
         return realogram
@@ -325,10 +326,8 @@ class ShelfService:
         Вставляет пустые боксы между найденными элементами и заменяет полностью пустые полки
         """
         result_matrix = product_matrix.copy()
-        for idx in range(product_matrix.len_shelves):
-            shelf = result_matrix[idx]
+        for idx, shelf in result_matrix:
             plan_shelf = planogram[idx]
-
             if not shelf.is_empty:
                 boxes = [b.copy() for b in shelf.boxes]
                 for i, curr in enumerate(boxes):
@@ -341,7 +340,7 @@ class ShelfService:
                         shelf.insert_boxes(to_insert, i)
                         
                 last_x = boxes[-1].width_point.y
-                end_x = img_shape[0]
+                end_x = img_shape[2]
                 to_insert = plan_shelf.get_boxes_between(last_x, end_x)
                 if to_insert:
                     for b in to_insert:

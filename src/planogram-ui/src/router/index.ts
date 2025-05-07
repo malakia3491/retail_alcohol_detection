@@ -4,6 +4,7 @@ import { ordersRoutes }    from './orders'
 import { planogramsRoutes } from './planograms'
 import { productsRoutes } from './products'
 import { personsRoutes } from './persons'
+import { realogramsRoutes } from './realograms'
 import { authStore } from '@/auth/store'
 
 const routes = [
@@ -13,6 +14,7 @@ const routes = [
   ...planogramsRoutes,
   ...productsRoutes,
   ...personsRoutes,
+  ...realogramsRoutes,
 ]
 
 const router = createRouter({

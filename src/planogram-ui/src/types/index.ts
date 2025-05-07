@@ -11,12 +11,16 @@ export * from './store/person_managment/person'
 export * from './store/store'
 export * from './store/product'
 export * from './store/shelf/planogram'
-
+export * from './store/shelf/realogram'
 
 export * from './responses/planogram_orders_page_response'
 export * from './responses/shelvings_response'
 export * from './responses/product_response'
 export * from './responses/auth_response'
+export * from './responses/planograms_response'
+export * from './responses/realograms_response'
+export * from './responses/stores_response'
+
 
 export * from './requests/add_planogram_request'
 export * from './requests/approve_planogram_request'

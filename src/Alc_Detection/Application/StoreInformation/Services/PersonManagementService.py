@@ -1,3 +1,4 @@
+from datetime import datetime
 import traceback
 from fastapi import HTTPException, status
 
@@ -8,11 +9,12 @@ from Alc_Detection.Application.StoreInformation.Exceptions.Exceptions import (
      PersonIsNotWorkerAlready
 )
 from Alc_Detection.Application.Requests.Requests import (
-    AddPermitionsRequest, AddPersonsRequest, AddPostsRequest, AddScheduleRequest, AddShiftsRequest, DismissPersonRequest,
+    AddPermitionsRequest, AddPersonsRequest, AddPostsRequest, AddScheduleRequest, AddShiftAssignment, AddShiftsRequest, DismissPersonRequest,
 )
 from Alc_Detection.Domain.Store.PersonManagment.Permition import Permition
 from Alc_Detection.Domain.Store.PersonManagment.Post import Post
 from Alc_Detection.Domain.Store.PersonManagment.Shift import Shift
+from Alc_Detection.Domain.Store.PersonManagment.StaffPosition import StaffPosition
 from Alc_Detection.Persistance.Repositories.PermitionRepository import PermitionRepository
 from Alc_Detection.Persistance.Repositories.PostRepository import PostRepository
 from Alc_Detection.Persistance.Repositories.Repositories import *
@@ -33,6 +35,41 @@ class PersonManagementService:
         self._schedule_mapper = schedule_mapper
         self._permition_repository = permition_repository
 
+    async def add_shift_assignment(
+        self,
+        request: AddShiftAssignment
+    ) -> str:
+        try:
+            store = await self._store_repository.get(request.store_id)
+            shift = store.find_shift_by_id(request.shift_id)
+            if shift:
+                staff_positions: list[StaffPosition] = []
+                persons: list[Person] = []
+                for assignment in request.assignments:
+                    person = await self._person_repository.get(assignment.person_id)                
+                    staff_positions.append(shift.get_staff_position_by_post_id(assignment.post_id))
+                    persons.append(person)
+                    
+                shift_assignment = shift.new_shift_assignments(
+                    assignment_date=datetime.now(),
+                    persons=persons,
+                    staff_positions=staff_positions,
+                )
+                count_added_records = await self._store_repository.add_shift_assignment(
+                    store,
+                    shift_assignment
+                )
+                return f"Succsessfully. {count_added_records} was added."
+            else: 
+                    raise HTTPException(
+                        status_code=status.HTTP_400_BAD_REQUEST,
+                        detail=ex.__str__())    
+        except Exception as ex:
+            print(traceback.format_exc())
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=ex.__str__())    
+    
     async def get_work_place(
         self,
         person: Person
@@ -125,15 +162,16 @@ class PersonManagementService:
             shift = store.find_shift_by_id(request.shift_id)
             if shift:
                 schedule = self._schedule_mapper.map_request_to_domain_model(request.schedule)
-                shift.add_schedule(schedule)
-                count_added_records =self._store_repository.add_schedules(
-                    store=store,
-                    shift=shift,
-                    schedules=schedule
+                count_added_records = await self._store_repository.add_schedules(
+                    store,
+                    shift,
+                    schedule
                 )
+                shift.add_schedule(schedule)
                 return f"Successfully. Added {count_added_records} records."
             return "Unsuccessfully. Shift is not found"
         except ValueError as ex:
+            print(traceback.format_exc())
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail=ex.__str__())     
@@ -148,10 +186,10 @@ class PersonManagementService:
             store = await self._store_repository.get(request.store_id)
             shifts = []
             for req_shift in request.shifts:
-                staff_positions: dict[Post, int] = {}
+                staff_positions: list[StaffPosition] = {}
                 for staff_position in req_shift.staff_positions:
                     post = await self._post_repository.get(staff_position)
-                    staff_positions[post] = req_shift.staff_positions[staff_position]
+                    staff_positions = StaffPosition(post=post, count=req_shift.staff_positions[staff_position])
                 req_shift.staff_positions = staff_positions
                 shifts.append(self._shift_mapper.map_request_to_domain_model(req_shift))
             store.add_shifts(*shifts)

@@ -4,12 +4,16 @@ from uuid import UUID
 
 from Alc_Detection.Application.Mappers.ScheduleMapper import ScheduleMapper
 from Alc_Detection.Application.Mappers.ShiftMapper import ShiftMapper
+from Alc_Detection.Application.Mappers.StoreMapper import StoreMapper
+from Alc_Detection.Application.StoreInformation.Services.RealogramResourcesService import RealogramResourcesService
 from Alc_Detection.Application.StoreInformation.Services.PersonManagementService import PersonManagementService
 from Alc_Detection.Application.StoreInformation.Services.PlanogramOrderResourcesService import PlanogramOrderResourcesService
 from Alc_Detection.Application.StoreInformation.Services.PlanogramResourcesService import PlanogramResourcesService
 from Alc_Detection.Application.StoreInformation.Services.ProductResourcesService import ProductResourcesService
 from Alc_Detection.Application.StoreInformation.Services.ShelvingResourcesService import ShelvingResourcesService
 
+from Alc_Detection.Application.StoreInformation.Services.StoreResourcesService import StoreResourcesService
+from Alc_Detection.Domain.Shelf.Planogram import Planogram
 from Alc_Detection.Domain.Store.PersonManagment.Post import Post
 from Alc_Detection.Domain.Store.PersonManagment.Shift import Shift
 from Alc_Detection.Domain.Store.Store import Store
@@ -32,6 +36,7 @@ from Alc_Detection.Application.Requests.Requests import (
     AddPersonsRequest,
     AddPostsRequest,
     AddScheduleRequest,
+    AddShiftAssignment,
     DismissPersonRequest,
     AddShelvingsRequest,
     AddProductsRequest,
@@ -40,17 +45,21 @@ from Alc_Detection.Application.Requests.Requests import (
     AddProductsRequest as AddProductsRequestModel
 )
 from Alc_Detection.Application.Requests.Models import (
+    PlanogramsResponse,
+    RealogramsResponse,
     ShelvingsResponse,
     ProductsResponse,
     PlanogramOrdersPageResponse,
     PlanogramOrdersResponse,
     ProductMatrix as ProductMatrixModel,
-    PlanogramOrdersResponse as OrdersResponseModel
+    PlanogramOrdersResponse as OrdersResponseModel,
+    StoresResponse
 )
 
 class StoreService:
     def __init__(
         self,
+        store_mapper: StoreMapper,
         store_repository: StoreRepository,
         person_repository: PersonRepository,
         post_repository: PostRepository,
@@ -66,6 +75,22 @@ class StoreService:
         product_matrix_mapper: ProductMatrixMapper
     ) -> None:
         # Initialize underlying services
+        
+        self.store_service = StoreResourcesService(
+            store_mapper=store_mapper,
+            store_repository=store_repository,
+        )
+        self.realogram_service = RealogramResourcesService(
+            store_repository=store_repository,
+            shelving_repository=shelving_repository,
+            planogram_order_repository=planogram_order_repository,
+            person_repository=person_repository,
+            product_repository=product_repository,
+            planogram_order_mapper=planogram_order_mapper,
+            planogram_mapper=planogram_mapper,
+            product_matrix_mapper=product_matrix_mapper
+        )
+        
         self.person_service = PersonManagementService(
             store_repository=store_repository,
             person_repository=person_repository,
@@ -98,6 +123,15 @@ class StoreService:
             product_repository=product_repository
         )
 
+    async def add_shift_assignment(self, request: AddShiftAssignment) -> str:
+        return await self.person_service.add_shift_assignment(request)
+
+    async def get_stores(self) -> StoresResponse:
+        return await self.store_service.get_stores()
+    
+    async def get_actual_realograms(self, store_id: UUID) -> RealogramsResponse:
+        return await self.realogram_service.get_actual_realograms(store_id)
+    
     # Person management facade methods
     async def add_persons(self, request: AddPersonsRequest) -> str:
         return await self.person_service.add_persons(request)
@@ -173,6 +207,9 @@ class StoreService:
         return await self.planogram_order_service.decline_planogram_order(person_id, order_id)
 
     # Planogram operations
+    async def get_last_agreed_planograms(self) -> PlanogramsResponse:
+        return await self.planogram_service.get_last_agreed_planograms()
+    
     async def get_planogram(self, order_id: UUID, planogram_id: UUID) -> OrdersResponseModel:
         return await self.planogram_service.get_planogram(order_id, planogram_id)
 
@@ -191,7 +228,7 @@ class StoreService:
     async def unapprove_planogram(self, request: ApprovePlanogramRequest) -> str:
         return await self.planogram_service.unapprove_planogram(request)
 
-    async def get_calibrated_planogram(self, store_id: UUID, shelving_id: UUID) -> OrdersResponseModel:
+    async def get_calibrated_planogram(self, store_id: UUID, shelving_id: UUID) -> Planogram:
         return await self.planogram_service.get_calibrated_planogram(store_id, shelving_id)
 
     async def calibrate_store_planogram(

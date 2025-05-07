@@ -56,23 +56,35 @@ class AuthService:
             user = await self.user_repo.get(UUID(user_id))
             store, shift, post = await self._store_serivce.get_work_place(user)
             if store:
-                store_id = store.id
-                shift_id = shift.id
+                store_rep = Store(
+                    id=store.id,
+                    name=store.name,
+                    is_office=store.is_office
+                )
+                shift_rep = Shift(
+                    id=shift.id,
+                    store_id=store.id,
+                    work_time_start=shift.work_time[0],
+                    work_time_end=shift.work_time[1],
+                    break_time_start=shift.break_time[0],
+                    break_time_end=shift.break_time[1],
+                    name=shift.name,
+                )
                 post_response = Post(
                     id=post.id, 
                     name=post.name,
                     permitions=[Permition(id=permition.id, name=permition.name) for permition in post.permitions]
                 )
             else:
-                store_id = None
-                shift_id = None 
+                store_rep = None
+                shift_rep = None 
                 post_response = None
             return Person(
                 id=user.id,
                 telegram_id=user.telegram_id,
                 name=user.name,
-                store_id=store_id,
-                shift_id=shift_id,
+                store=store_rep,
+                shift=shift_rep,
                 post=post_response,
                 is_store_worker=user.is_store_worker,
                 is_active=user.is_active,

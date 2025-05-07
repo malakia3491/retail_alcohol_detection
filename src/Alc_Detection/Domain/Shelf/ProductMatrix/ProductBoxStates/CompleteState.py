@@ -2,17 +2,20 @@ from Alc_Detection.Domain.Shelf.ProductMatrix.Point import Point
 from Alc_Detection.Domain.Shelf.ProductMatrix.ProductBox import ProductBox
 from Alc_Detection.Domain.Shelf.ProductMatrix.ProductBoxStates.ProductBoxState import ProductBoxState
 from Alc_Detection.Domain.Exceptions.Exceptions import *
+from Alc_Detection.Domain.Shelf.ProductMatrix.Rectangle import Rectangle
 
 class CompleteState(ProductBoxState):
     def load_positions(self, product_box: ProductBox, position: Point) -> None:
-        raise InvalidStateError("Позиции уже загружены!")
+        product_box._position = position
     
     def load_coordinates(self, product_box: ProductBox, xyxy: list, conf: float) -> None:
-        raise InvalidStateError("Координаты уже загружены!")
-    
-    def load_positions_and_coordinates(self, product_box: ProductBox, xyxy: list, position: Point, conf: float) -> None:
-        raise InvalidStateError("Планограмма завершена!")
+        product_box._rectangle = Rectangle(Point(xyxy[0], xyxy[1]), Point(xyxy[2], xyxy[3]))
+        product_box._conf = conf
         
+    def load_positions_and_coordinates(self, product_box: ProductBox, xyxy: list, position: Point, conf: float) -> None:
+        product_box._position = position
+        product_box._rectangle = Rectangle(Point(xyxy[0], xyxy[1]), Point(xyxy[2], xyxy[3]))
+        product_box._conf = conf
     
     def sort_point(self, product_box: ProductBox):
         return product_box._position
@@ -33,6 +36,8 @@ class CompleteState(ProductBoxState):
     def center(self, product_box: ProductBox):
         return product_box._rectangle.center()
     
+    def cords(self, product_box: ProductBox):
+        return [product_box.p_min.x, product_box.p_min.y, product_box.p_max.x, product_box.p_max.y] 
     
     def width_point(self, product_box: ProductBox):
         return Point(product_box._rectangle.p_min.x, product_box._rectangle.p_max.x)
@@ -67,5 +72,5 @@ class CompleteState(ProductBoxState):
                product_box.position == other.position
     
     def str(self, product_box: ProductBox) -> str:        
-        string = f'EmptyBox' if product_box.is_empty else f'[{product_box.product.name}]({product_box.position})'
+        string = f'EmptyBox({product_box.position}))' if product_box.is_empty else f'[{product_box.product.name}]({product_box.position})'
         return string

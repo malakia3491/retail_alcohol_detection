@@ -50,16 +50,19 @@ class ProductMatrixMapper:
                                                                            product_id=product.id,
                                                                            product=self._product_mapper.map_to_response_model(product),
                                                                            count=count) 
-        shelves = [ShelfResponseModel(position=index,
-                                      product_boxes=[
-                                          ProductBoxResponseModel(
-                                                    id=None,
-                                                    product_id=box.product.id,
-                                                    planogram_product=planogram_products[box.product.id],
-                                                    pos_x=box.position.x,
-                                                    is_empty=box.is_empty) 
-                                                    for box in shelf.boxes]) 
-                   for index, (_, shelf) in enumerate(domain_model)]
-        product_matrix = ProductMatrixResponseModel(products=planogram_products.values(),
-                                                    shelfs=shelves)        
-        return product_matrix
+        shelves = []
+        for index, (_, shelf) in enumerate(domain_model):
+            boxes = []
+            for box in shelf.boxes:
+                res_box = ProductBoxResponseModel(id=None,
+                                                  product_id=box.product.id,
+                                                  planogram_product=planogram_products[box.product.id],
+                                                  cords=box.cords,
+                                                  pos_x=box.position.x,
+                                                  is_empty=box.is_empty,
+                                                  is_incorrect_position=box.is_incorrect_position)
+                boxes.append(res_box)
+            res = ShelfResponseModel(position=index, product_boxes=boxes)
+            shelves.append(res)                                                                                                             
+        return ProductMatrixResponseModel(products=planogram_products.values(),
+                                          shelfs=shelves)        
