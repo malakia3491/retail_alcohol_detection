@@ -107,10 +107,10 @@ class PrototypeClassifier(DistanceClassifier):
         
         X = X.cpu().numpy()
         Y = Y.cpu().numpy()
-        
+
         with torch.no_grad():
             preds = self(X)
-        
+
         return {
             'Accuracy': accuracy_score(Y, preds),
             'Precision': precision_score(Y, preds, average='macro', zero_division=0),

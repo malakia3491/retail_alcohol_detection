@@ -39,30 +39,31 @@ class ProductMatrixMapper:
     
     def map_to_response_model(self,
                               domain_model: ProductMatrix,
-                              product_count: dict[Product, int]
+                              product_count: dict[Product, int]=None
     ) -> ProductMatrixResponseModel:
         if domain_model is None: return None
         if not isinstance(domain_model, ProductMatrix):
             raise ValueError(domain_model)
         planogram_products = {}
-        for product, count in product_count.items():
-            planogram_products[product.id] = PlanogramProductResponseModel(id=None,
-                                                                           product_id=product.id,
-                                                                           product=self._product_mapper.map_to_response_model(product),
-                                                                           count=count) 
+        if product_count:
+            for product, count in product_count.items():
+                planogram_products[product.id] = PlanogramProductResponseModel(id=None,
+                                                                            product_id=product.id,
+                                                                            product=self._product_mapper.map_to_response_model(product),
+                                                                            count=count) 
         shelves = []
         for index, (_, shelf) in enumerate(domain_model):
             boxes = []
             for box in shelf.boxes:
                 res_box = ProductBoxResponseModel(id=None,
-                                                  product_id=box.product.id,
-                                                  planogram_product=planogram_products[box.product.id],
-                                                  cords=box.cords,
-                                                  pos_x=box.position.x,
-                                                  is_empty=box.is_empty,
-                                                  is_incorrect_position=box.is_incorrect_position)
+                                                product_id=box.product.id,
+                                                planogram_product=planogram_products[box.product.id] if planogram_products and box.product.id in planogram_products else None,
+                                                cords=box.cords,
+                                                pos_x=box.position.x,
+                                                is_empty=box.is_empty,
+                                                is_incorrect_position=box.is_incorrect_position)
                 boxes.append(res_box)
             res = ShelfResponseModel(position=index, product_boxes=boxes)
-            shelves.append(res)                                                                                                             
+            shelves.append(res)                                                                                                        
         return ProductMatrixResponseModel(products=planogram_products.values(),
                                           shelfs=shelves)        

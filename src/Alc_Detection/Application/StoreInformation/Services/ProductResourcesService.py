@@ -17,7 +17,7 @@ class ProductResourcesService:
         store: Store,
         product: Product
     ) -> int:
-        return True
+        return 100
     
     async def get_products(self) -> ProductsResponse:
         try:
@@ -26,7 +26,7 @@ class ProductResourcesService:
                 products=[ProductModel(
                     id=product.id,
                     name=product.name,
-                    image_url=f"/static/products/{product.id}/{product.image.name}"
+                    image_url= f"/static/products/{product.id}/{product.image.name}" if product.image else None 
                    )
                     for product in products]
             )

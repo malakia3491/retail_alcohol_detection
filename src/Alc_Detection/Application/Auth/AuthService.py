@@ -64,10 +64,10 @@ class AuthService:
                 shift_rep = Shift(
                     id=shift.id,
                     store_id=store.id,
-                    work_time_start=shift.work_time[0],
-                    work_time_end=shift.work_time[1],
-                    break_time_start=shift.break_time[0],
-                    break_time_end=shift.break_time[1],
+                    work_time_start=shift.work_time.start,
+                    work_time_end=shift.work_time.end,
+                    break_time_start=shift.break_time.start,
+                    break_time_end=shift.break_time.end,
                     name=shift.name,
                 )
                 post_response = Post(

@@ -68,8 +68,13 @@
         </button>
         <ul class="subnav" v-show="openItem === 'reports'">
           <li>
-            <router-link to="/reports/execution" class="subnav-link">
+            <router-link to="/reports/planogram_compliance" class="subnav-link">
               Отчёт по выполнению планограмм
+            </router-link>
+          </li>
+          <li>
+            <router-link to="/reports/planogram_usage" class="subnav-link">
+              Отчёт об использовании планограмм
             </router-link>
           </li>
           <li>

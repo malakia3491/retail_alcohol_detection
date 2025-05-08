@@ -26,18 +26,6 @@ class EmptyDeviation(Deviation):
     def is_enough_product(self, value: bool):
         self._is_enough_product = value
 
-    @property
-    def elimination_time(self):
-        return super().elimination_time
-
-    @elimination_time.setter
-    def elimination_time(self, value: time):
-        if value < self.send_time:
-            raise ValueError(value)
-        if not self.is_enough_product:
-            raise ValueError(value)
-        super().elimination_time = value
-
     def add_responsible_employees(self, person: Person):
         if not self.is_enough_product:
             pass

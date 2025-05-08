@@ -2,6 +2,7 @@ from fastapi import UploadFile
 import numpy as np
 import cv2
 from typing import Tuple, List
+import torch
 from torchvision import transforms
 from torch import stack
 from PIL import Image
@@ -64,6 +65,14 @@ class ImagePreprocessor:
         processed_image = self._format_bytes_to_image(contents)
         return processed_image
         
+    async def resize(self, img, output_size=(128, 64)):
+        transform = transforms.Compose([
+            transforms.ToPILImage(),
+            transforms.Resize(output_size),
+            transforms.ToTensor(),
+        ])
+        return transform(img)
+    
     async def process(self, image_file: UploadFile, with_read=True):
         """
         Преобразует список изображений в тензор и перемещает его на указанное устройство.

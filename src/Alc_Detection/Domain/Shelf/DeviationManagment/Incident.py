@@ -1,4 +1,4 @@
-from datetime import time
+from datetime import datetime, time
 
 from Alc_Detection.Domain.Shelf.DeviationManagment.Deviation import Deviation
 from Alc_Detection.Domain.Shelf.DeviationManagment.EmptyDeviation import EmptyDeviation
@@ -12,13 +12,11 @@ class Incident:
                  realogram: Realogram,
                  deviations: list[Deviation],
                  responsible_employees: list[Person],
-                 shift=None,
                  id=None,
     ):
         self.id = id 
         self._send_time = send_time
         self._realogram = realogram
-        self._shift = shift
         self._responsible_employees = responsible_employees
         self._add_deviations(deviations)
     
@@ -49,15 +47,19 @@ class Incident:
             deviation.realogram = self.realogram 
     
     @property
-    def shift(self):
-        return self._shift
-    
+    def type(self) -> str:
+        if isinstance(self.deviations[0], EmptyDeviation):
+            if not self.deviations[0].is_enough_product:
+                return "Нет товаров"
+            else: return "Пустоты"
+        else: return "Несоблюдения планограммы"
+            
     @property
-    def send_time(self):
+    def send_time(self) -> datetime:
         return self._send_time
     
     @property
-    def elimination_time(self):
+    def elimination_time(self) -> datetime:
         is_resolved = True
         for deviation in self.deviations:
             if deviation.elimination_time is None:
@@ -74,8 +76,12 @@ class Incident:
         return None
     
     @property
-    def reaction_time(self): 
-        return self.elimination_time - self._send_time
+    def reaction_time(self) -> float: 
+        seconds_diff = None
+        if self.elimination_time and self.send_time:
+            delta = self.elimination_time - self.send_time
+            seconds_diff = delta.total_seconds()
+        return seconds_diff
     
     @property
     def is_resolved(self):
@@ -114,4 +120,7 @@ class Incident:
         return deviation in self.deviations
     
     def __str__(self):
-        return f"{self.shift} {self.deviation_count} {self.send_time}"
+        return f"{self.deviation_count} {self.send_time} {self.deviations}"
+    
+    def __repr__(self) -> str:
+        return self.__str__()    

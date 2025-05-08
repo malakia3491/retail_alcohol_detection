@@ -5,6 +5,7 @@ import { planogramsRoutes } from './planograms'
 import { productsRoutes } from './products'
 import { personsRoutes } from './persons'
 import { realogramsRoutes } from './realograms'
+import { reportsRouters } from './reports'
 import { authStore } from '@/auth/store'
 
 const routes = [
@@ -15,6 +16,7 @@ const routes = [
   ...productsRoutes,
   ...personsRoutes,
   ...realogramsRoutes,
+  ...reportsRouters
 ]
 
 const router = createRouter({

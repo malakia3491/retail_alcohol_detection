@@ -51,22 +51,31 @@ class RealogramResourcesService:
         self,
         store_id: str
     ) -> RealogramsResponse:     
-        store = await self._store_repository.get(store_id)
-        shelvings = await self._shelving_repository.get_all()
-        actual_realograms = store.get_actual_realograms(shelvings)
-        realograms: list[RealogramApiModel] = []
-        for shelving, realogram in actual_realograms.items():
-            realogram_response = RealogramApiModel(
-                id=realogram.id,
-                planogram_id=realogram.planogram.id,
-                shelving_id=shelving.id,
-                img_src=realogram.image_url,
-                create_date=realogram.create_date,
-                product_matrix=self._product_matrix_mapper.map_to_response_model(realogram.product_matrix, realogram.planogram.product_count),
-                accordance=realogram.accordance,
-                empties_count=realogram.empty_count
+        try:
+            store = await self._store_repository.get(store_id)
+            shelvings = await self._shelving_repository.get_all()
+            actual_realograms = store.get_actual_realograms(shelvings)
+            realograms: list[RealogramApiModel] = []
+
+            for shelving, realogram in actual_realograms.items():
+                for product in realogram.planogram.product_count:
+                    print(product)
+                    print(realogram.planogram.id)
+                    print(realogram.planogram.product_count[product])
+                realogram_response = RealogramApiModel(
+                    id=realogram.id,
+                    planogram_id=realogram.planogram.id,
+                    shelving_id=shelving.id,
+                    img_src=realogram.image_url,
+                    create_date=realogram.create_date,
+                    product_matrix=self._product_matrix_mapper.map_to_response_model(realogram.product_matrix),
+                    accordance=realogram.accordance,
+                    empties_count=realogram.empty_count
+                )
+                realograms.append(realogram_response)
+            return RealogramsResponse(
+                realograms=realograms
             )
-            realograms.append(realogram_response)
-        return RealogramsResponse(
-            realograms=realograms
-        )
+        except Exception as ex:
+            print(traceback.format_exc())
+            raise ex

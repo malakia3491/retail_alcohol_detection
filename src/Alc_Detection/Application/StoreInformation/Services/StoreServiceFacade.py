@@ -2,6 +2,7 @@ from typing import List, Optional
 from datetime import datetime
 from uuid import UUID
 
+from Alc_Detection.Application.IncidentManagement.Settings import Settings
 from Alc_Detection.Application.Mappers.ScheduleMapper import ScheduleMapper
 from Alc_Detection.Application.Mappers.ShiftMapper import ShiftMapper
 from Alc_Detection.Application.Mappers.StoreMapper import StoreMapper
@@ -45,6 +46,8 @@ from Alc_Detection.Application.Requests.Requests import (
     AddProductsRequest as AddProductsRequestModel
 )
 from Alc_Detection.Application.Requests.Models import (
+    PlanogramComplianceReport,
+    PlanogramUsageReport,
     PlanogramsResponse,
     RealogramsResponse,
     ShelvingsResponse,
@@ -72,13 +75,15 @@ class StoreService:
         schedule_mapper: ScheduleMapper,
         planogram_order_mapper: PlanogramOrderMapper,
         planogram_mapper: PlanogramMapper,
-        product_matrix_mapper: ProductMatrixMapper
+        product_matrix_mapper: ProductMatrixMapper,
+        settings: Settings,
     ) -> None:
         # Initialize underlying services
         
         self.store_service = StoreResourcesService(
             store_mapper=store_mapper,
             store_repository=store_repository,
+            settings=settings
         )
         self.realogram_service = RealogramResourcesService(
             store_repository=store_repository,
@@ -122,6 +127,12 @@ class StoreService:
         self.product_service = ProductResourcesService(
             product_repository=product_repository
         )
+
+    async def get_planogram_usage_report(self, start: datetime, end: datetime) -> PlanogramUsageReport:
+        return await self.store_service.generate_planogram_usage_report(start, end)
+
+    async def get_planogram_compliance_report(self, start: datetime, end: datetime) -> PlanogramComplianceReport:
+        return await self.store_service.generate_planogram_compliance_report(start, end)
 
     async def add_shift_assignment(self, request: AddShiftAssignment) -> str:
         return await self.person_service.add_shift_assignment(request)

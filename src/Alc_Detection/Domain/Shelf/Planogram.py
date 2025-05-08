@@ -79,6 +79,25 @@ class Planogram:
                self.shelving == value.shelving and \
                self.create_date == value.create_date and \
                self.product_count == value.product_count and \
-               self.product_matrix == self.product_matrix and \
                self.approver == value.approver and \
                self.approval_date == value.approval_date   
+               
+    def __hash__(self):
+        hash_elements = [
+            hash(self.author),  
+            hash(self.shelving), 
+            int(self.create_date.timestamp()) 
+        ]
+        if self.product_count:
+            count_hash = hash(frozenset(
+                (product.id, count) 
+                for product, count in self.product_count.items()
+            ))
+            hash_elements.append(count_hash)
+     
+        if self.approver:
+            hash_elements.append(hash(self.approver.id))
+        if self.approval_date:
+            hash_elements.append(int(self.approval_date.timestamp()))
+        
+        return hash(tuple(hash_elements))

@@ -1,6 +1,7 @@
 from datetime import datetime
 from uuid import UUID
 from Alc_Detection.Application.Requests.Models import Person
+from Alc_Detection.Domain.Date.extensions import Period
 from Alc_Detection.Domain.Shelf.DeviationManagment.Incident import Incident
 from Alc_Detection.Domain.Shelf.Calibration import Calibration
 from Alc_Detection.Domain.Shelf.Planogram import Planogram
@@ -14,7 +15,6 @@ class Store:
                  name,
                  calibrations:list[Calibration]=[],
                  realograms:list[Realogram]=[],
-                 incidents:list[Incident]=[],
                  shifts:list[Shift]=[],
                  is_office:bool=False,
                  id=None):
@@ -22,7 +22,6 @@ class Store:
         self.name = name 
         self._is_office = is_office
         self._realograms = sorted(realograms, key=lambda r: r.create_date, reverse=True)
-        self._incidents = sorted(incidents, key=lambda i: i.send_time, reverse=True)
         self._shifts = shifts
         self._calibrations = calibrations
 
@@ -44,17 +43,6 @@ class Store:
     @property
     def realograms(self) -> list[Realogram]:
         return self._realograms
-    
-    @property
-    def incidents(self) -> list[Incident]:
-        return self._incidents
-    
-    def get_unresolved_incidents_by_shelving(self, shelving: Shelving) -> list[Incident]:
-        incidents = []
-        for incident in self.incidents:
-            if incident.shelving == shelving and not incident.is_resolved:
-                incidents.append(incident)
-        return incidents
     
     @property
     def shifts(self) -> list[Shift]:
@@ -119,13 +107,23 @@ class Store:
                 return calib
         return None   
      
+    def get_using_planograms_by_period(self, period: Period) -> dict[Planogram, tuple[Person, datetime]]:
+        result: dict[Planogram, tuple[Person, datetime]] = {}
+        for calibration in self.calibrations:
+            if period.between(calibration.create_date) and not calibration.planogram in result:
+                result[calibration.planogram] = (calibration.creator, calibration.create_date)
+        return result
+    
+    def get_realograms_by_shelving(self, shelving: Shelving) -> list[Realogram]:
+        result: list[Realogram] = []
+        for realogram in self.realograms:
+            if realogram.shelving == shelving:
+                result.append(realogram)
+        return result
+    
     def add_shifts(self, *shifts: Shift):
         for shift in shifts:
             self._shifts.append(shift)
-    
-    def add_incident(self, *incidents: Incident):
-        for incident in incidents:            
-            self._incidents.insert(0, incident)
     
     def add_calibration(self, calibration: Calibration):
         self._calibrations.insert(0, calibration)

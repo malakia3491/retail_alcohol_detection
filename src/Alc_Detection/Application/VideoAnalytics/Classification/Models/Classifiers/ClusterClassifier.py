@@ -1,129 +1,117 @@
 import numpy as np
-from sklearn.metrics import (
-    accuracy_score, 
-    precision_score, 
-    recall_score, 
-    f1_score
-)
 import torch
-from Alc_Detection.Application.VideoAnalytics.Classification.Models.Classifiers.DistanceClassifier import DistanceClassifier
-
+from sklearn.metrics import (
+    accuracy_score, precision_score,
+    recall_score, f1_score
+)
 from sklearn.cluster import (
-    KMeans, 
-    DBSCAN, 
-    AgglomerativeClustering, 
-    SpectralClustering, 
-    Birch, 
-    MeanShift, 
-    OPTICS
+    KMeans, DBSCAN, AgglomerativeClustering,
+    SpectralClustering, Birch, MeanShift, OPTICS
 )
 from sklearn.metrics import pairwise_distances_argmin_min
 from scipy.optimize import linear_sum_assignment
 
+from Alc_Detection.Application.VideoAnalytics.Classification.Models.Classifiers.DistanceClassifier import DistanceClassifier
+
 class ClusterClassifier(DistanceClassifier):
-    def __init__(self, algorithm='kmeans', **kwargs):
+    def __init__(self, algorithm='kmeans', device='cpu', **kwargs):
         super(ClusterClassifier, self).__init__()
-        self.models = self.__init_models_dic()
-        if algorithm not in self.models.keys():
+        self.models = {
+            'kmeans': lambda: KMeans(**kwargs),
+            'dbscan': lambda: DBSCAN(**kwargs),
+            'agglomerative': lambda: AgglomerativeClustering(**kwargs),
+            'spectral': lambda: SpectralClustering(**kwargs),
+            'birch': lambda: Birch(**kwargs),
+            'meanshift': lambda: MeanShift(**kwargs),
+            'optics': lambda: OPTICS(**kwargs),
+        }
+        if algorithm not in self.models:
             raise ValueError(f"Алгоритм {algorithm} не поддерживается.")
         self.algorithm = algorithm
-        self.kwargs = kwargs
+        self.device = device
         self.model = None
         self.cluster_centers_ = None
         self.cluster_indices = None
         self.mapping = None
-
-    def __init_models_dic(self):
-        models = {
-            "kmeans": lambda kwargs: KMeans(**kwargs),
-            "dbscan": lambda kwargs: DBSCAN(**kwargs),
-            "agglomerative": lambda kwargs: AgglomerativeClustering(**kwargs),
-            "spectral": lambda kwargs: SpectralClustering(**kwargs),
-            "birch": lambda kwargs: Birch(**kwargs),
-            "meanshift": lambda kwargs: MeanShift(**kwargs),
-            "optics": lambda kwargs: OPTICS(**kwargs)
-        }
-        return models
-
-    def __match_clusters(self, true_labels, cluster_labels):
-        """
-        Устанавливает соответствие между предсказанными кластерами и истинными метками классов.
-        Возвращает:
-            cluster_to_class (dict): Словарь соответствий {кластер -> класс}.
-            new_cluster_labels (array): Преобразованные кластеры с заменой номеров на классы.
-        """
-        unique_true = np.unique(true_labels)
-        unique_clusters = np.unique(cluster_labels)
-
-        matrix = np.zeros((len(unique_true), len(unique_clusters)), dtype=int)
-        for true, pred in zip(true_labels, cluster_labels):
-            true_idx = np.where(unique_true == true)[0][0]
-            pred_idx = np.where(unique_clusters == pred)[0][0]
-            matrix[true_idx, pred_idx] += 1
-
-        row_ind, col_ind = linear_sum_assignment(matrix, maximize=True)
-
-        cluster_to_class = {unique_clusters[col]: unique_true[row] for row, col in zip(row_ind, col_ind)}
-
-        new_cluster_labels = np.array([cluster_to_class[pred] for pred in cluster_labels])
-        return cluster_to_class, new_cluster_labels
-    
-    def __match_clusters_majority(self, true_labels, cluster_labels):
-        label_map = {}
-        unique_clusters = np.unique(cluster_labels)
-        for cluster in unique_clusters:
-            mask = (cluster_labels == cluster)
-            cluster_true_labels = true_labels[mask]
-            most_common = np.bincount(cluster_true_labels).argmax()
-            label_map[cluster] = most_common
-        return label_map
+        # хранение полных данных для дообучения
+        self._X = None
+        self._Y = None
 
     def fit(self, X: torch.Tensor, Y: torch.Tensor) -> None:
-        X = X.cpu().numpy()
-        Y = Y.cpu().numpy()
-        
-        self.model = self.models[self.algorithm](self.kwargs)
-        self.model.fit(X)
+        """
+        Обучение кластерного классификатора на всем наборе данных.
+        X: torch.Tensor или np.ndarray [n_samples, dim]
+        Y: torch.Tensor или np.ndarray [n_samples]
+        """
+        X_np = X.cpu().numpy() if isinstance(X, torch.Tensor) else X
+        Y_np = Y.cpu().numpy() if isinstance(Y, torch.Tensor) else Y
+        self._X = X_np
+        self._Y = Y_np
 
+        self.model = self.models[self.algorithm]()
+        self.model.fit(self._X)
+        self._update_centers_and_mapping()
+
+    def add_classes(self, X_new: torch.Tensor, Y_new: torch.Tensor) -> None:
+        """
+        Добавление новых примеров и переобучение модели.
+        """
+        X_np = X_new.cpu().numpy() if isinstance(X_new, torch.Tensor) else X_new
+        Y_np = Y_new.cpu().numpy() if isinstance(Y_new, torch.Tensor) else Y_new
+        # объединяем старые и новые данные
+        if self._X is None:
+            self._X, self._Y = X_np, Y_np
+        else:
+            self._X = np.vstack([self._X, X_np])
+            self._Y = np.concatenate([self._Y, Y_np])
+        # переобучаем модель
+        self.model = self.models[self.algorithm]()
+        self.model.fit(self._X)
+        self._update_centers_and_mapping()
+
+    def _update_centers_and_mapping(self):
+        """Вспомогательная функция для обновления центров кластеров и маппинга."""
         if hasattr(self.model, 'cluster_centers_'):
             self.cluster_centers_ = self.model.cluster_centers_
             self.cluster_indices = np.arange(self.cluster_centers_.shape[0])
+            labels = self.model.predict(self._X)
         else:
             labels = self.model.labels_
-            unique_clusters = np.unique(labels)
-            self.cluster_centers_ = np.array([X[labels == i].mean(axis=0) for i in unique_clusters])
-            self.cluster_indices = unique_clusters
-
-        self.mapping = self.__match_clusters_majority(Y, self.model.labels_)
+            unique = np.unique(labels)
+            self.cluster_centers_ = np.vstack([
+                self._X[labels == c].mean(axis=0) for c in unique
+            ])
+            self.cluster_indices = unique
+        # создаем соответствие кластер->класс
+        self.mapping = self._match_clusters_majority(self._Y, labels)
 
     def forward(self, X: torch.Tensor) -> np.ndarray:
         if self.model is None:
-            raise ValueError("Модель не была обучена. Сначала вызовите метод fit().")
-        
-        X = X.cpu().numpy()
-        
+            raise ValueError("Модель не обучена. Вызовите fit() или add_classes().")
+        X_np = X.cpu().numpy() if isinstance(X, torch.Tensor) else X
         if hasattr(self.model, 'predict'):
-            predicted_labels = self.model.predict(X)
+            cluster_labels = self.model.predict(X_np)
         else:
-            closest, _ = pairwise_distances_argmin_min(X, self.cluster_centers_)
-            predicted_labels = np.array([self.cluster_indices[i] for i in closest])
-        
-        return np.array([self.mapping[label] for label in predicted_labels])
+            closest, _ = pairwise_distances_argmin_min(X_np, self.cluster_centers_)
+            cluster_labels = np.array([self.cluster_indices[i] for i in closest])
+        return np.array([self.mapping[c] for c in cluster_labels])
 
     def evaluate(self, X: torch.Tensor, Y: torch.Tensor) -> dict[str, float]:
-        if len(X) != len(Y):
-            raise ValueError(f"Количество векторов X {len(X)} не соответствует количеству меток Y {len(Y)}!")
-        if self.model is None:
-            raise ValueError("Модель не была обучена!")
-        
-        X = X.cpu().numpy()
-        Y = Y.cpu().numpy()
-        
-        predicted_labels = self(X)
-        metrics = {
-            'Accuracy': accuracy_score(Y, predicted_labels),
-            'Precision': precision_score(Y, predicted_labels, average='macro', zero_division=0),
-            'Recall': recall_score(Y, predicted_labels, average='macro', zero_division=0),
-            'F1': f1_score(Y, predicted_labels, average='macro', zero_division=0)
+        X_np = X.cpu().numpy() if isinstance(X, torch.Tensor) else X
+        Y_np = Y.cpu().numpy() if isinstance(Y, torch.Tensor) else Y
+        preds = self.forward(X)
+        return {
+            'Accuracy': accuracy_score(Y_np, preds),
+            'Precision': precision_score(Y_np, preds, average='macro', zero_division=0),
+            'Recall': recall_score(Y_np, preds, average='macro', zero_division=0),
+            'F1': f1_score(Y_np, preds, average='macro', zero_division=0)
         }
-        return metrics
+
+    @staticmethod
+    def _match_clusters_majority(true_labels, cluster_labels):
+        label_map = {}
+        for c in np.unique(cluster_labels):
+            mask = cluster_labels == c
+            most = np.bincount(true_labels[mask]).argmax()
+            label_map[c] = most
+        return label_map

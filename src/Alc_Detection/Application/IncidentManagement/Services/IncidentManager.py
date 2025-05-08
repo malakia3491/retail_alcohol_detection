@@ -45,18 +45,18 @@ class IncidentManager:
         store: Store,
         realogram: Realogram
     ) -> None:
-        unresolved_incidents = store.get_unresolved_incidents_by_shelving(realogram.shelving)
-        print(f"ВСЕ ИНЦИДЕНТЫ {store.incidents}")
+        now = datetime.now()  
+        shift = store.actual_shift
+        unresolved_incidents = shift.get_unresolved_incidents_by_shelving(realogram.shelving)
+        print(f"ВСЕ ИНЦИДЕНТЫ {shift.incidents}")
         print(f"Нерешённые инциденты {unresolved_incidents}")   
         print("Deviations", realogram.deviation_count)                    
         if realogram.deviation_count < 0:
             for incident in unresolved_incidents:
-                incident.resolve(datetime.now()) 
+                incident.resolve(now) 
         else:
-            now = datetime.now()       
-            shift = store.actual_shift
             print("SHIFT", shift)
-            update_incidents = []            
+            update_incidents: list[Incident] = []            
             for incident in unresolved_incidents:
                 for deviation in incident.deviations:
                     if not deviation._product_box in realogram.empties and \
@@ -74,12 +74,17 @@ class IncidentManager:
             
             print("New incidents", new_incidents)
             if len(update_incidents) > 0:
-                await self._store_repository.update_incidents(
-                    store, now, *update_incidents)
+                deviations = []
+                [deviations.extend(incident.deviations) for incident in update_incidents]
+                await self._store_repository.update_detections_elimination_time(
+                    store, now, *deviations
+                )
+                await self._store_repository.update_incidents_elimination_time(
+                    store, *update_incidents)
             if len(new_incidents) > 0:
-                store.add_incident(*new_incidents)
+                shift.add_incidents(*new_incidents)
                 await self._store_repository.add_incident(
-                    store, *new_incidents)
+                    store, shift, *new_incidents)
             
                 messages = [Message(realogram_img_src=realogram.image_source,
                                     planogram_img_src=realogram.planogram.img_src,
@@ -159,19 +164,17 @@ class IncidentManager:
         if len(deviations) >= self._settings.FACES_COUNT:
             employees = shift.get_actual_employees_by(self._regular_posts)
             new_incident = Incident(
-                send_time=datetime.now().time(),
+                send_time=datetime.now(),
                 realogram=realogram,
                 deviations=deviations,
-                responsible_employees=employees,
-                shift=shift)
+                responsible_employees=employees)
         if len(not_enough_product_deviations) > 0:
             administators = shift.get_actual_employees_by(self._administrative_posts)
             admin_incident = Incident(
                 send_time=datetime.now(),
                 realogram=realogram,
                 deviations=not_enough_product_deviations,
-                responsible_employees=administators,
-                shift=shift)        
+                responsible_employees=administators)        
         return new_incident, admin_incident  
     
     def _handle_realogram_incongruity(
@@ -194,7 +197,6 @@ class IncidentManager:
                 send_time=datetime.now(),
                 realogram=realogram,
                 deviations=deviations,
-                responsible_employees=employees,
-                shift=shift)
+                responsible_employees=employees)
             return new_incident
         return None     

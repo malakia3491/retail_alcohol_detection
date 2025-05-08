@@ -1,10 +1,12 @@
 from datetime import datetime
 from uuid import UUID
+from Alc_Detection.Application.Mappers.PersonMapper import PersonMapper
 from Alc_Detection.Application.Mappers.ScheduleMapper import ScheduleMapper
 from Alc_Detection.Application.Mappers.ShiftMapper import ShiftMapper
+from Alc_Detection.Domain.Shelf.DeviationManagment.Deviation import Deviation
 from Alc_Detection.Domain.Shelf.DeviationManagment.Incident import Incident
 from Alc_Detection.Domain.Shelf.Realogram import Realogram
-from sqlalchemy import select, update, delete
+from sqlalchemy import case, select, update, delete
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.exc import NoResultFound
 from typing import Union, List, Optional
@@ -25,7 +27,9 @@ from Alc_Detection.Persistance.Models.Models import RealogramDetection as Realog
 from Alc_Detection.Persistance.Models.Models import Incident as IncidentModel
 from Alc_Detection.Persistance.Models.Models import StoreShift as ShiftModel
 from Alc_Detection.Persistance.Models.Models import ShiftAssignment as ShiftAssignmentModel
+from Alc_Detection.Persistance.Models.ShelfDetection.RealogramDetection import RealogramDetection
 from Alc_Detection.Persistance.Models.StoreModels.ShiftPostPerson import ShiftPostPerson
+from Alc_Detection.Persistance.Models.StoreModels.Person import Person as PersonModel
 
 class StoreRepository:
     def __init__(self,
@@ -33,10 +37,12 @@ class StoreRepository:
                  cache: CacheBase,
                  store_mapper: StoreMapper,
                  shift_mapper: ShiftMapper,
-                 schedule_mapper: ScheduleMapper): 
+                 schedule_mapper: ScheduleMapper,
+                 person_mapper: PersonMapper): 
         self.session_factory = session_factory
         self._store_mapper = store_mapper
         self._shift_mapper = shift_mapper
+        self._person_mapper = person_mapper
         self._schedule_mapper = schedule_mapper
         self._cache = cache
 
@@ -185,27 +191,37 @@ class StoreRepository:
     async def add_incident(
         self,
         store: Store,
+        shift: Shift,
         *incidents: Incident
     ) -> int:
         if self._cache.contains(store):
             incidents_db = []
             for incident in incidents:
+                persons = []
+                for person in incident.responsible_employees:
+                    person = self._person_mapper.map_to_db_model(person)
+                    persons.append(person)
                 detections = []
                 for deviation in incident.deviations:
+                    r_product_id = deviation.right_product.id if deviation.product_box.is_incorrect_position else None
                     detection = RealogramDetectionModel(
                         id=deviation.product_box.id,
                         realogram_id=incident.realogram.id,
                         product_id=deviation.product.id,
+                        right_product_id=r_product_id,
                         matrix_cords=deviation.position.to_list(),
                         box_cords=deviation.product_box.cords,
+                        conf=deviation.product_box.conf,
                         is_empty=deviation.product_box.is_empty,
                         is_incorrect_pos=deviation.product_box.is_incorrect_position,
                     )
                     detections.append(detection)
                 incident_db = IncidentModel(
-                    store_shift_id=incident.shift.id,
+                    store_shift_id=shift.id,
                     send_time=incident.send_time,
                     message=incident.build_message_text(),
+                    persons=persons,
+                    type=incident.type,
                     detections=detections                
                 )
                 incidents_db.append(incident_db)
@@ -265,9 +281,17 @@ class StoreRepository:
         *incidents: Incident 
     ) -> int:
         if self._cache.contains(store):
+            incident_ids = []
+            for incident in incidents:
+                if incident.is_resolved: incident_ids.append(incident.id)
             target_ids = [incident.id for incident in incidents]
-            try:
+            try:                
                 async with self.session_factory() as session:
+                    stmt = (
+                        update(IncidentModel)
+                        .where(IncidentModel.id.in_(incident_ids))
+                        .values(elimination_time=elimination_time)
+                    )
                     stmt = (
                         update(RealogramDetectionModel)
                         .where(RealogramDetectionModel.incident_id.in_(target_ids))
@@ -280,3 +304,70 @@ class StoreRepository:
         else:
             raise ObjectUpdateException(object_type=Store, object_id=store.id)
         return len([store])
+    
+    async def update_incidents_elimination_time(
+        self,
+        store: Store,
+        *incidents: Incident
+    ) -> int:
+        """
+        Bulk‑update elimination_time для инцидентов одним запросом через CASE WHEN.
+        """
+        if not self._cache.contains(store):
+            raise ObjectUpdateException(Store, store.id)
+        
+        mapping = {
+            inc.id: inc.elimination_time
+            for inc in incidents
+            if inc.elimination_time is not None
+        }
+        if not mapping:
+            return 0
+        
+        case_stmt = case(mapping, value=IncidentModel.id)
+
+        try:
+            async with self.session_factory() as session:
+                stmt = (
+                    update(IncidentModel)
+                    .where(IncidentModel.id.in_(mapping.keys()))
+                    .values(elimination_time=case_stmt)
+                )
+                result = await session.execute(stmt)
+                await session.commit()
+                return result.rowcount
+        except Exception as ex:
+            raise ObjectUpdateException(
+                Incident,
+                list(mapping.keys()),
+                ex
+            )
+        
+    async def update_detections_elimination_time(
+            self,
+            store: Store,
+            elimination_time: datetime,
+            *deviations: Deviation
+        ) -> int:
+            """
+            Обновляет поле elimination_time у переданных отклонений.
+            """
+            if not self._cache.contains(store):
+                raise ObjectUpdateException(Store, store.id)
+
+            ids = [d.id for d in deviations]
+            if not ids:
+                return 0
+
+            try:
+                async with self.session_factory() as session:
+                    stmt = (
+                        update(RealogramDetectionModel)
+                        .where(RealogramDetectionModel.id.in_(ids))
+                        .values(elimination_time=elimination_time)
+                    )
+                    res = await session.execute(stmt)
+                    await session.commit()
+                    return res.rowcount
+            except Exception as ex:
+                raise ObjectUpdateException(RealogramDetection, ids, ex)

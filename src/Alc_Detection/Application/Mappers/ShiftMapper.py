@@ -92,10 +92,10 @@ class ShiftMapper:
         return StoreShiftModel(
             store_id=store.id,
             name=domain_model.name,
-            time_work_start=domain_model.work_time[0],
-            time_work_end=domain_model.work_time[1],
-            time_break_start=domain_model.break_time[0],
-            time_break_end=domain_model.break_time[1],
+            time_work_start=domain_model.work_time.start,
+            time_work_end=domain_model.work_time.end,
+            time_break_start=domain_model.break_time.start,
+            time_break_end=domain_model.break_time.end,
             shift_posts=shift_posts,
             schedules=db_schedules,          
         )          

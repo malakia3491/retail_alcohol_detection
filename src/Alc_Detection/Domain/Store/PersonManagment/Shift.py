@@ -1,12 +1,14 @@
 from uuid import UUID
 from datetime import datetime, time
 
+from Alc_Detection.Domain.Date.extensions import Period
 from Alc_Detection.Domain.Shelf.DeviationManagment.Incident import Incident
 from Alc_Detection.Domain.Store.PersonManagment.Person import Person
 from Alc_Detection.Domain.Store.PersonManagment.Post import Post
 from Alc_Detection.Domain.Store.PersonManagment.Schedule import Schedule
 from Alc_Detection.Domain.Store.PersonManagment.ShiftAssignment import ShiftAssignment
 from Alc_Detection.Domain.Store.PersonManagment.StaffPosition import StaffPosition
+from Alc_Detection.Domain.Store.Shelving import Shelving
 
 class Shift:
     def __init__(
@@ -22,8 +24,8 @@ class Shift:
     ):
         self.id = id
         self.name = name 
-        self.work_time = work_time
-        self.break_time = break_time
+        self._work_time = work_time
+        self._break_time = break_time
         self._schedules = schedules
         self._on_shift_assignments = on_shift_assignments 
         self._incidents = incidents
@@ -32,6 +34,14 @@ class Shift:
         for s_p in staff_positions:
             staff_positions_dict[s_p.post] = s_p
         self._staff_positions = staff_positions_dict
+    
+    @property
+    def work_time(self):
+        return Period(start=self._work_time[0], end=self._work_time[1])
+    
+    @property
+    def break_time(self):
+        return Period(start=self._break_time[0], end=self._break_time[1])
     
     @property
     def incidents(self):
@@ -65,6 +75,24 @@ class Shift:
     @property
     def staff_positions(self):
         return self._staff_positions
+    
+    def get_incidents_by_period(self, period: Period) -> list[Incident]:
+        result = []
+        for incident in self._incidents:
+            if period.between(incident.send_time):
+                result.append(incident)
+        return result
+    
+    def add_incidents(self, *incidents: Incident):
+        for incident in incidents:
+            self._incidents.insert(0, incident)
+    
+    def get_unresolved_incidents_by_shelving(self, shelving: Shelving) -> list[Incident]:
+        incidents = []
+        for incident in self.incidents:
+            if incident.shelving == shelving and not incident.is_resolved:
+                incidents.append(incident)
+        return incidents
     
     def add_schedule(self, new_schedule: Schedule):
         if self._schedules:            

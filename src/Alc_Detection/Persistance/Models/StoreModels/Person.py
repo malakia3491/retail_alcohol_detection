@@ -21,3 +21,4 @@ class Person(BaseModel):
     agreed_planograms = relationship("Planogram", foreign_keys="Planogram.approver_id", back_populates="approver", cascade="all, delete-orphan", lazy='selectin')
     shift_post_persons = relationship("ShiftPostPerson", back_populates="person", cascade="all, delete-orphan", lazy='selectin')
     calibrations = relationship("Calibration", back_populates="creator", cascade="all, delete-orphan", lazy='selectin')
+    incidents = relationship("PersonIncident", back_populates="person", cascade="all, delete-orphan", lazy='selectin')

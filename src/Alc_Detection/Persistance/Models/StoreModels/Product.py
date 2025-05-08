@@ -12,4 +12,5 @@ class Product(BaseModel):
      
     planogram_products = relationship("PlanogramProduct", back_populates="product", lazy='selectin')
     images = relationship("ProductImage", back_populates="product", lazy='selectin')
-    detections = relationship("RealogramDetection", back_populates="product", lazy='selectin')
+    detections = relationship("RealogramDetection", foreign_keys="RealogramDetection.product_id", back_populates="product", lazy='selectin')
+    incorrect_pos_detections = relationship("RealogramDetection", foreign_keys="RealogramDetection.right_product_id", back_populates="right_product", lazy='selectin')

@@ -8,6 +8,7 @@ from Alc_Detection.API.Controllers.Controllers import *
 from Alc_Detection.Application.Auth.AuthService import AuthService
 from Alc_Detection.Application.Auth.TokenService import TokenService
 from Alc_Detection.Application.IncidentManagement.Settings import Settings
+from Alc_Detection.Application.Mappers.IncidentMapper import IncidentMapper
 from Alc_Detection.Application.Mappers.PostMapper import PostMapper
 from Alc_Detection.Application.Mappers.RealogramMapper import RealogramMapper
 from Alc_Detection.Application.Mappers.ScheduleMapper import ScheduleMapper
@@ -58,7 +59,8 @@ class ModulesInitializer:
         store_mapper, \
         post_mapper, \
         shift_mapper, \
-        schedule_mapper= self._initialize_mappers()
+        schedule_mapper, \
+        incident_mapper = self._initialize_mappers()
                  
         store_repository, \
         shelving_repository, \
@@ -85,7 +87,10 @@ class ModulesInitializer:
                 
         # messanger = await self._initialize_notification_module()
         messanger = None
-        
+        settings = Settings(
+            faces_count=1,
+            need_creation_time=5*60
+        )       
         store_service = self._initialize_store_module(
             shift_mapper=shift_mapper,
             schedule_mapper=schedule_mapper,
@@ -100,7 +105,8 @@ class ModulesInitializer:
             planogram_order_mapper=planogram_order_mapper,
             planogram_mapper=planogram_mapper,
             permition_repository=permition_repository,
-            store_mapper=store_mapper)
+            store_mapper=store_mapper,
+            settings=settings)
         
         token_service = TokenService(
             secret_key=self.config_reader.get_secret(),
@@ -116,7 +122,6 @@ class ModulesInitializer:
         )
         self._initialize_auth_module(auth_service=auth_service) 
         
-        settings = Settings(faces_count=1)
         incident_manager = self._initialize_incident_management(
             store_service=store_service,
             store_rep=store_repository,
@@ -159,6 +164,7 @@ class ModulesInitializer:
                                             cache=InMemoryCache(),
                                             store_mapper=store_mapper,
                                             shift_mapper=shift_mapper,
+                                            person_mapper=person_mapper,
                                             schedule_mapper=schedule_mapper)
         shelving_repository =  ShelvingRepository(session_factory=session_factory,
                                                   cache=InMemoryCache(),
@@ -262,7 +268,8 @@ class ModulesInitializer:
                                  shift_mapper: ShiftMapper,
                                  schedule_mapper: ScheduleMapper,
                                  permition_repository: PermitionRepository,
-                                 store_mapper: StoreMapper):   
+                                 store_mapper: StoreMapper,
+                                 settings: Settings):   
         store_service = StoreService(store_repository=store_repository,
                                      shelving_repository=shelving_repository,
                                      person_repository=person_repository,
@@ -276,7 +283,8 @@ class ModulesInitializer:
                                      schedule_mapper=schedule_mapper,
                                      shift_mapper=shift_mapper,
                                      permition_repository=permition_repository,
-                                     store_mapper=store_mapper)
+                                     store_mapper=store_mapper,
+                                     settings=settings)
         controller = StoreController(store_service=store_service)
         self.controllers_dict["store_controller"] = (controller, ("/retail", "retail"))
         return store_service
@@ -288,17 +296,21 @@ class ModulesInitializer:
         shelving_mapper = ShelvingMapper()
         person_mapper = PersonMapper()
         product_mapper = ProductMapper()
-        shift_mapper = ShiftMapper(person_mapper=person_mapper,
-                                   schedule_mapper=schedule_mapper)
         product_matrix_mapper = ProductMatrixMapper(product_mapper=product_mapper)
-        shift_mapper = ShiftMapper(person_mapper=person_mapper,
-                                   schedule_mapper=schedule_mapper)
         planogram_mapper = PlanogramMapper(person_mapper=person_mapper,
                                            shelving_mapper=shelving_mapper,
                                            product_mapper=product_mapper,
                                            product_matrix_mapper=product_matrix_mapper)
         realogram_mapper = RealogramMapper(planogram_mapper=planogram_mapper,
                                            product_mapper=product_mapper)
+        incident_mapper = IncidentMapper(
+            product_mapper=product_mapper,
+            person_mapper=person_mapper,
+            realogram_mapper=realogram_mapper,
+        )
+        shift_mapper = ShiftMapper(person_mapper=person_mapper,
+                                   schedule_mapper=schedule_mapper,
+                                   incident_mapper=incident_mapper)
         calibration_mapper = CalibrationMapper(person_mapper=person_mapper,
                                                planogram_mapper=planogram_mapper)
         store_mapper = StoreMapper(realogram_mapper=realogram_mapper,
@@ -307,4 +319,5 @@ class ModulesInitializer:
         planogram_order_mapper = PlanogramOrderMapper(person_mapper=person_mapper,
                                                       shelving_mapper=shelving_mapper,
                                                       planogram_mapper=planogram_mapper)
-        return product_mapper, person_mapper, shelving_mapper, product_matrix_mapper, planogram_mapper, planogram_order_mapper, store_mapper, post_mapper, shift_mapper, schedule_mapper         
+        return product_mapper, person_mapper, shelving_mapper, product_matrix_mapper, planogram_mapper, \
+               planogram_order_mapper, store_mapper, post_mapper, shift_mapper, schedule_mapper, incident_mapper         

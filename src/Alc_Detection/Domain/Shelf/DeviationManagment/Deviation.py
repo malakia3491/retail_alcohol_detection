@@ -18,6 +18,10 @@ class Deviation:
         self._realogram = None
         
     @property
+    def id(self):
+        return self.product_box.id        
+        
+    @property
     def product(self):
         return self._product_box.product
     

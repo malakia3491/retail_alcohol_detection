@@ -4,7 +4,7 @@ from datetime import date, datetime
 from fastapi import APIRouter, Form, HTTPException, status
 from fastapi.responses import JSONResponse
 
-from Alc_Detection.Application.Requests.Models import Planogram, PlanogramOrder, PlanogramOrdersPageResponse, PlanogramOrdersResponse, PlanogramsResponse, ProductsResponse, RealogramsResponse, ShelvingsResponse, StoresResponse
+from Alc_Detection.Application.Requests.Models import Planogram, PlanogramComplianceReport, PlanogramOrder, PlanogramOrdersPageResponse, PlanogramOrdersResponse, PlanogramUsageReport, PlanogramsResponse, ProductsResponse, RealogramsResponse, ShelvingsResponse, StoresResponse
 from Alc_Detection.Application.Requests.Requests import \
 (AddPermitionsRequest, AddPersonsRequest, AddPlanogramRequest, AddPostsRequest, AddProductsRequest, AddScheduleRequest, AddShelvingsRequest, AddShiftAssignment, AddShiftsRequest,
  AddStoresRequest, ApprovePlanogramRequest, DismissPersonRequest, UpdatePersonRequest)
@@ -130,6 +130,50 @@ class StoreController:
                                   self.add_shift_assignment,
                                   methods=["POST"],
                                   status_code=status.HTTP_200_OK)
+        self.router.add_api_route("/reports/planogram_compliance_report/{start}/{end}",
+                                  self.get_planogram_compliance_report,
+                                  methods=["GET"],
+                                  status_code=status.HTTP_200_OK,
+                                  response_model=PlanogramComplianceReport)
+        self.router.add_api_route("/reports/planogram_usage_report/{start}/{end}",
+                                  self.get_planogram_usage_report,
+                                  methods=["GET"],
+                                  status_code=status.HTTP_200_OK,
+                                  response_model=PlanogramUsageReport)
+    
+    async def get_planogram_usage_report(
+        self,
+        start: datetime,
+        end: datetime
+    ) -> PlanogramUsageReport:
+        try:
+            response = await self.store_service.get_planogram_usage_report(start, end)
+            return response
+        except HTTPException as he:
+            print(traceback.format_exc())
+            raise he
+        except Exception as e:
+            print(traceback.format_exc())
+            return JSONResponse(
+                content={"message": f"Internal error: {str(e)}"},
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)    
+                
+    async def get_planogram_compliance_report(
+        self,
+        start: datetime,
+        end: datetime
+    ) -> PlanogramComplianceReport:
+        try:
+            response = await self.store_service.get_planogram_compliance_report(start, end)
+            return response
+        except HTTPException as he:
+            print(traceback.format_exc())
+            raise he
+        except Exception as e:
+            print(traceback.format_exc())
+            return JSONResponse(
+                content={"message": f"Internal error: {str(e)}"},
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)            
     
     async def add_shift_assignment(
         self,

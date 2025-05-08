@@ -129,9 +129,9 @@ class ShelfService:
                                                  img.shape)
 
             _, path = self._image_saver.save(image_file=image_file,
-                                          image=img,
-                                          save_dir=str(datetime.now().date()),
-                                          obj_type=Realogram)
+                                             image=img,
+                                             save_dir=str(datetime.now().date()),
+                                             obj_type=Realogram)
             realogram = Realogram(
                 planogram=planogram,
                 product_matrix=product_matrix,
