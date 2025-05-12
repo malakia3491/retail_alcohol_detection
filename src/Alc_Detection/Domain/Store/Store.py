@@ -64,6 +64,31 @@ class Store:
                 return shift
         return None 
     
+    def find_realogram_by_id(
+        self,
+        realogram_id: str
+    ) -> Realogram:
+        for realogram in self._realograms:
+            if realogram.id == realogram_id:
+                return realogram
+        return None
+    
+    def get_realograms(
+        self,
+        period: Period,
+        shelving: Shelving=None
+    ) -> list[Realogram]:
+        realograms = []
+        if shelving:
+            for realogram in self.realograms:
+                if realogram.shelving == shelving and period.between(realogram.create_date):
+                    realograms.append(realogram)
+        else:
+            for realogram in self.realograms:
+                if period.between(realogram.create_date):
+                    realograms.append(realogram)    
+        return realograms
+    
     def get_actual_realograms(
         self,
         shelvings: list[Shelving]

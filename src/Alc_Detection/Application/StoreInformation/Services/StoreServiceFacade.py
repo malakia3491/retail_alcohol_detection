@@ -49,6 +49,8 @@ from Alc_Detection.Application.Requests.Models import (
     PlanogramComplianceReport,
     PlanogramUsageReport,
     PlanogramsResponse,
+    Realogram,
+    RealogramsPageResponse,
     RealogramsResponse,
     ShelvingsResponse,
     ProductsResponse,
@@ -127,6 +129,12 @@ class StoreService:
         self.product_service = ProductResourcesService(
             product_repository=product_repository
         )
+
+    async def get_realogram(self, store_id: str, realogram_id: str) -> Realogram:
+        return await self.realogram_service.get_realogram(store_id=store_id, realogram_id=realogram_id)
+
+    async def get_realograms_page(self, store_id: str, shelving_id: str, start: datetime, end: datetime, page: int, page_size: int) -> RealogramsPageResponse:
+        return await self.realogram_service.get_realograms(store_id, shelving_id=shelving_id, date_start=start, date_end=end, page=page, page_size=page_size)
 
     async def get_planogram_usage_report(self, start: datetime, end: datetime) -> PlanogramUsageReport:
         return await self.store_service.generate_planogram_usage_report(start, end)

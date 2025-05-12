@@ -22,6 +22,8 @@ export * from './responses/realograms_response'
 export * from './responses/stores_response'
 export * from './responses/reports_response'
 export * from './responses/calibration_boxes_response'
+export * from './responses/realograms_page_response'
+
 
 export * from './requests/add_planogram_request'
 export * from './requests/approve_planogram_request'

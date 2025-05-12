@@ -159,6 +159,11 @@ class Realogram(BaseModel):
     product_matrix: ProductMatrix
     accordance: float
     empties_count: int
+    
+class RealogramsPageResponse(BaseModel):
+    realograms: List[Realogram]
+    total_count: int
+    page: int
 
 class StoresResponse(BaseModel):
     stores: List[Store]

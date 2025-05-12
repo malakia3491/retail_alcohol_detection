@@ -23,3 +23,15 @@ export const formatDate = (d: string | Date | null | undefined) => {
       day:    'numeric',
     });
   };
+
+  export function formatDateTime(iso: string | Date): string {
+  const dt = typeof iso === 'string' ? new Date(iso) : iso;
+  return dt.toLocaleString('ru-RU', {
+    day:   '2-digit',
+    month: '2-digit',
+    year:  'numeric',
+    hour:   '2-digit',
+    minute: '2-digit',
+    hour12: false
+  });
+}

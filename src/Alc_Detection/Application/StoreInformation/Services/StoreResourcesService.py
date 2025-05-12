@@ -34,11 +34,6 @@ class StoreResourcesService:
         for store in stores:
             for shift in store.shifts:
                 incidents = shift.get_incidents_by_period(Period(start=start, end=end)) 
-                print(start)
-                print(end)
-                print(len(incidents))
-                print(incidents)
-
                 empty_incidents = [inc for inc in incidents if inc.type == "Пустоты"]
                 no_product_incidents = [inc for inc in incidents if inc.type == "Нет товаров"]
                 mismatch_incidents = [inc for inc in incidents if inc.type == "Несоблюдения планограммы"]

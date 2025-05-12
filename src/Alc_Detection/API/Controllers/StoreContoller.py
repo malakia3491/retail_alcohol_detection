@@ -1,10 +1,11 @@
 import traceback
+from typing import Optional
 from uuid import UUID
 from datetime import date, datetime
 from fastapi import APIRouter, Form, HTTPException, status
 from fastapi.responses import JSONResponse
 
-from Alc_Detection.Application.Requests.Models import Planogram, PlanogramComplianceReport, PlanogramOrder, PlanogramOrdersPageResponse, PlanogramOrdersResponse, PlanogramUsageReport, PlanogramsResponse, ProductsResponse, RealogramsResponse, ShelvingsResponse, StoresResponse
+from Alc_Detection.Application.Requests.Models import Planogram, PlanogramComplianceReport, PlanogramOrder, PlanogramOrdersPageResponse, PlanogramOrdersResponse, PlanogramUsageReport, PlanogramsResponse, ProductsResponse, Realogram, RealogramsPageResponse, RealogramsResponse, ShelvingsResponse, StoresResponse
 from Alc_Detection.Application.Requests.Requests import \
 (AddPermitionsRequest, AddPersonsRequest, AddPlanogramRequest, AddPostsRequest, AddProductsRequest, AddScheduleRequest, AddShelvingsRequest, AddShiftAssignment, AddShiftsRequest,
  AddStoresRequest, ApprovePlanogramRequest, DismissPersonRequest, UpdatePersonRequest)
@@ -140,6 +141,60 @@ class StoreController:
                                   methods=["GET"],
                                   status_code=status.HTTP_200_OK,
                                   response_model=PlanogramUsageReport)
+        self.router.add_api_route("/realograms/page/{page}",
+                                  self.get_page_realograms,
+                                  methods=["GET"],
+                                  status_code=status.HTTP_200_OK,
+                                  response_model=RealogramsPageResponse)
+        self.router.add_api_route("/realograms/{store_id}/{realogram_id}",
+                                  self.get_realogram,
+                                  methods=["GET"],
+                                  status_code=status.HTTP_200_OK,
+                                  response_model=Realogram)
+    
+    async def get_realogram(
+        self, 
+        store_id: UUID,
+        realogram_id: UUID
+    ) -> Realogram:
+        try:      
+            response = await self.store_service.get_realogram(
+                store_id=store_id,
+                realogram_id=realogram_id
+            )        
+            return response        
+        except HTTPException as he:
+            raise he        
+        except Exception as e:
+            return JSONResponse(
+                content={"message": f"Internal error: {str(e)}"},
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)           
+    
+    async def get_page_realograms(
+        self,
+        store_id: UUID,
+        date_start: datetime,
+        date_end: datetime,
+        shelving_id: Optional[UUID] = None,
+        page: int = 0,
+        page_size: int = Form(10)
+    ) -> RealogramsPageResponse:
+        try:      
+            response = await self.store_service.get_realograms_page(
+                store_id=store_id,
+                shelving_id=shelving_id,
+                start=date_start,
+                end=date_end,
+                page=page,
+                page_size=page_size
+            )        
+            return response        
+        except HTTPException as he:
+            raise he        
+        except Exception as e:
+            return JSONResponse(
+                content={"message": f"Internal error: {str(e)}"},
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)     
     
     async def get_planogram_usage_report(
         self,

@@ -39,7 +39,12 @@
           </li>
           <li>
             <router-link to="/realograms/actual" class="subnav-link">
-              Реалограммы
+              Актуальные реалограммы
+            </router-link>
+          </li>
+          <li>
+            <router-link to="/realograms" class="subnav-link">
+              Cписок реалограмм
             </router-link>
           </li>
         </ul>

@@ -49,7 +49,7 @@
             >
               <img
                 v-if="box.product"
-                :src="base_url+box.product.image_url"
+                :src="base_url + box.product.image_url"
                 :alt="box.product.name"
               />
             </div>
@@ -58,9 +58,40 @@
       </div>
     </div>
 
+    <!-- Таблица добавленных товаров -->
+    <div class="selected-products">
+      <h3>Добавленные товары</h3>
+      <table class="selected-table">
+        <thead>
+          <tr>
+            <th>Товар</th>
+            <th>Количество</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="plan in matrix.products" :key="plan.product_id">
+            <td>
+              {{ productName(plan.product_id) }}
+            </td>
+            <td>
+              <input
+                type="number"
+                min="0"
+                v-model.number="plan.count"
+                @change="onCountChange(plan)"
+              />
+            </td>
+          </tr>
+          <tr v-if="matrix.products.length === 0">
+            <td colspan="2" class="no-data">Нет добавленных товаров</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
     <!-- Tooltip -->
     <div v-if="hoverBox" class="tooltip">
-      <strong>{{ hoverBox.product!.name }}</strong><br>
+      <strong>{{ hoverBox.product!.name }}</strong><br />
       Количество: {{ hoverBox.planogram_product!.count }}
     </div>
 
@@ -77,7 +108,7 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, ref, onMounted, onBeforeUnmount } from 'vue';
+import { defineComponent, ref, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import type {
   Product,
@@ -115,7 +146,7 @@ export default defineComponent({
         product_id: '',
         pos_x: i,
         is_empty: true,
-        is_incorrect_position: false
+        is_incorrect_position: false,
       } as ProductBox));
     }
 
@@ -129,6 +160,7 @@ export default defineComponent({
       }));
     });
 
+    // drag & drop (как было)
     function onDragStartFromList(p: Product) {
       dragSource.value = { fromList: true, product: p };
     }
@@ -141,7 +173,7 @@ export default defineComponent({
     function onDropOnShelf(shelf: number) {
       if (!dragSource.value) return;
       const row = matrix.value.shelfs[shelf];
-      let idx = row.product_boxes.findIndex(b => b.is_empty);
+      let idx = row.product_boxes.findIndex((b) => b.is_empty);
       if (idx < 0) {
         idx = row.product_boxes.length;
         row.product_boxes.push(...makeBoxes(1));
@@ -155,19 +187,22 @@ export default defineComponent({
       if (dragSource.value.fromList) {
         place(shelf, idx, dragSource.value.product);
       } else {
-        const srcRow = matrix.value.shelfs[dragSource.value.shelf].product_boxes;
+        const srcRow =
+          matrix.value.shelfs[dragSource.value.shelf].product_boxes;
         const tmp = row[idx];
         row[idx] = srcRow[dragSource.value.idx];
         srcRow[dragSource.value.idx] = tmp;
       }
       dragSource.value = null;
     }
+
+    // кладём товар в ячейку и увеличиваем plan.count
     function place(shelf: number, idx: number, p: Product) {
       const row = matrix.value.shelfs[shelf];
       while (row.product_boxes.length <= idx) {
         row.product_boxes.push(...makeBoxes(1));
       }
-      let plan = matrix.value.products.find(x => x.product_id === p.id);
+      let plan = matrix.value.products.find((x) => x.product_id === p.id);
       if (!plan) {
         plan = { product_id: p.id!, count: 0 } as PlanogramProduct;
         matrix.value.products.push(plan);
@@ -180,23 +215,40 @@ export default defineComponent({
         is_incorrect_position: false,
         planogram_product: plan,
       } as ProductBox;
-      plan.count = row.product_boxes.filter(b => !b.is_empty && b.product_id === p.id).length;
+
+      // синхронизуем count через количество заполненных ячеек
+      plan.count = matrix.value.shelfs
+        .flatMap((s) => s.product_boxes)
+        .filter((b) => !b.is_empty && b.product_id === p.id).length;
     }
 
+    // когда пользователь вручную меняет количество в таблице
+    function onCountChange(plan: PlanogramProduct) {
+      // ничего дополнительно не делаем —
+      // при сабмите возьмётся именно plan.count
+    }
+
+    // вспомогалки
+    const productName = (id: string) => {
+      const p = products.value.find((x) => x.id === id);
+      return p ? p.name : id;
+    };
+
     function hasGaps() {
-      return matrix.value.shelfs.some(shelf => {
+      return matrix.value.shelfs.some((shelf) => {
         const arr = shelf.product_boxes;
         let filled = false;
         for (let b of arr) {
           if (!b.is_empty) filled = true;
           else if (filled) return true;
         }
-        return arr.some(b => b.is_empty);
+        return arr.some((b) => b.is_empty);
       });
     }
+
     async function submitPlanogram() {
       if (hasGaps()) {
-        const shelves: Shelf[] = []
+        const shelves: Shelf[] = [];
         for (const shelf of matrix.value.shelfs) {
           const new_shelf: Shelf = {
             position: shelf.position,
@@ -208,13 +260,13 @@ export default defineComponent({
                 product_id: box.product_id,
                 pos_x: box.pos_x,
                 is_empty: false,
-                is_incorrect_position: false
+                is_incorrect_position: false,
               } as ProductBox);
             }
           }
-          shelves.push(new_shelf)
+          shelves.push(new_shelf);
         }
-        matrix.value.shelfs = shelves
+        matrix.value.shelfs = shelves;
       }
       isSubmitting.value = true;
       try {
@@ -242,6 +294,8 @@ export default defineComponent({
       onDragStartInMatrix,
       onDropOnShelf,
       onSwap,
+      onCountChange,
+      productName,
       submitPlanogram,
     };
   },
@@ -252,17 +306,20 @@ export default defineComponent({
 .create-planogram-page {
   padding: 1.5rem;
 }
+
 .editor-container {
   display: flex;
   gap: 2rem;
   margin-bottom: 1.5rem;
 }
+
 .products-list {
   width: 220px;
   background: var(--surface);
   padding: 1rem;
   border-radius: 8px;
 }
+
 .product-item {
   padding: 0.5rem;
   margin-bottom: 0.25rem;
@@ -271,18 +328,22 @@ export default defineComponent({
   border: 1px solid var(--border);
   border-radius: 4px;
 }
+
 .shelves {
   flex: 1;
 }
+
 .shelf-row {
   margin-bottom: 1.25rem;
 }
+
 .shelf-boxes {
   display: flex;
   border: 1px solid var(--border);
   border-radius: 4px;
   overflow-x: auto;
 }
+
 .shelf-box {
   width: 60px;
   height: 60px;
@@ -293,14 +354,17 @@ export default defineComponent({
   background: var(--bg);
   transition: outline 0.2s, background 0.2s;
 }
+
 .shelf-box:last-child {
   border-right: none;
 }
+
 .shelf-box img {
   max-width: 100%;
   max-height: 100%;
   object-fit: contain;
 }
+
 .tooltip {
   position: fixed;
   top: 50px;
@@ -309,9 +373,54 @@ export default defineComponent({
   border: 1px solid var(--border);
   padding: 0.5rem;
   border-radius: 4px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   z-index: 10;
 }
+
+.selected-products {
+  margin-bottom: 1.5rem;
+}
+
+.selected-products h3 {
+  margin-bottom: 0.5rem;
+  color: var(--primary);
+}
+
+.selected-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--surface);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.selected-table th,
+.selected-table td {
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid var(--border);
+  text-align: left;
+}
+
+.selected-table th {
+  background: var(--bg);
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.selected-table input[type='number'] {
+  width: 80px;
+  padding: 0.25rem;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+}
+
+.no-data {
+  text-align: center;
+  padding: 1rem;
+  color: var(--text-secondary);
+}
+
 .submit-btn {
   padding: 0.75rem 1.5rem;
   background: var(--primary);
@@ -320,6 +429,7 @@ export default defineComponent({
   border-radius: 6px;
   cursor: pointer;
 }
+
 .loading {
   text-align: center;
   padding: 2rem;
