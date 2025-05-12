@@ -39,7 +39,7 @@ class Product:
             return None
         if version in self._prototypes.keys():
             return self._prototypes[version]
-        else: raise KeyError(version)
+        else: None
     
     def embeddings(self, version):
         embeddings = []

@@ -1,10 +1,9 @@
-from Alc_Detection.Domain.Store.PersonManagment.Post import Post
-
 class Person:
     def __init__(
         self,
         name: str,
-        telegram_id: str, 
+        email: str,
+        telegram_id: str=None,
         password_hash: str = None,      
         is_store_worker=True,
         is_active=True,
@@ -12,6 +11,7 @@ class Person:
     ):
         self.id = id
         self.name = name
+        self.email = email
         self.telegram_id = telegram_id
         self.is_store_worker = is_store_worker
         self.is_active = is_active
@@ -19,7 +19,7 @@ class Person:
 
     def __eq__(self, value):
         return isinstance(value, Person) and \
-               self.telegram_id == value.telegram_id
+               self.email == value.email
                
     def __hash__(self):
-        return hash((self.name, self.telegram_id, self.is_store_worker))
+        return hash(self.email)

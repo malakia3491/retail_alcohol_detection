@@ -62,16 +62,13 @@ class PersonRepository:
     async def update(self, obj_id: UUID, data: dict) -> int:        
         obj = self._cache.get(obj_id)
         if obj:
-            for key in data:
-                obj.__setattr__(str(key), data[key])
             try:
                 async with self.session_factory() as session:
                     stmt = (
                         update(PersonModel)
                         .where(PersonModel.id == obj_id)
                         .values(data)
-                    )
-                    
+                    )                    
                     await session.execute(stmt)
                     await session.commit()
             except Exception as ex:
@@ -79,6 +76,20 @@ class PersonRepository:
         else:
             raise ObjectUpdateException(object_type=Person, object_id=obj_id)
         return len([obj])
+    
+    async def find_by_telegram_id(self, telegram_id: str) -> Person | None:
+        persons: list[Person] = self._cache.get_all()
+        for person in persons:
+            if person.telegram_id == telegram_id:
+                return person
+        return None      
+    
+    async def find_by_email(self, email: str) -> Person | None:
+        persons: list[Person] = self._cache.get_all()
+        for person in persons:
+            if person.email == email:
+                return person
+        return None
     
     async def find_by_username(self, username: str) -> Person | None:
         persons: list[Person] = self._cache.get_all()

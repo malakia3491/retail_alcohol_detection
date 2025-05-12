@@ -24,14 +24,15 @@ class Incident:
         shelfs_strs: dict[int, str] = {}
         for deviation in self.deviations:
             if deviation.position.x in shelfs_strs:
-                shelfs_strs[deviation.position.x] += f"{deviation }"
+                shelfs_strs[deviation.position.x] += f"{deviation} "
             else:    
-                shelfs_strs[deviation.position.x] = f"{deviation }"        
-        result = f"Время обнаружения {self.realogram.create_date.time()}\n"+\
-                 f"Стеллаж: {self.realogram.shelving.name}"+\
+                shelfs_strs[deviation.position.x] = f"{deviation} "        
+        time = f"{self.realogram.create_date.hour}:{self.realogram.create_date.minute}:{self.realogram.create_date.second}"
+        result = f"<b>Время обнаружения:</b> {time}\n"+\
+                 f"<b>Стеллаж:</b> {self.realogram.shelving.name}\n\n"+\
                  f"{self._define_title()}\n"
         for id, string in shelfs_strs.items():                            
-            result += f"Полка {id+1}: " + string + "\n"                
+            result += f"Полка {id+1}: \n" + string + "\n"                
             
         return result
                             
@@ -64,7 +65,7 @@ class Incident:
         for deviation in self.deviations:
             if deviation.elimination_time is None:
                 is_resolved = False
-                break
+                return None
         
         if self.deviations and is_resolved:
             deviations = sorted(
@@ -104,6 +105,14 @@ class Incident:
         return len(self._deviations)
     
     @property 
+    def not_resolved_deviations(self) -> list[Deviation]:
+        not_resolved_deviations = []
+        for deviation in self._deviations:
+            if not deviation.is_resolved:
+                not_resolved_deviations.append(deviation)
+        return not_resolved_deviations
+    
+    @property 
     def deviations(self):
         return self._deviations
     
@@ -113,11 +122,14 @@ class Incident:
         for deviation in self._deviations:
             deviation.elimination_time = time
         
-    def contains(self, *deviations: Deviation):
-        return all(self._contains(deviation) for deviation in deviations)
-    
-    def _contains(self, deviation: Deviation):
-        return deviation in self.deviations
+    def contains(self, deviation: Deviation):
+        for dev in self.not_resolved_deviations:
+            print("ИЩЕМ", deviation.position)
+            print("РАССМАТРИВАЕМ", dev.position)
+            print(dev.position == deviation.position)
+            if dev.position == deviation.position:
+                return True
+        return False 
     
     def __str__(self):
         return f"{self.deviation_count} {self.send_time} {self.deviations}"

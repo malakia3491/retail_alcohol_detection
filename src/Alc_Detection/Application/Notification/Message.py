@@ -24,7 +24,7 @@ class Message:
     
     @property
     def realogram_img(self) -> tuple[str, str]:
-        return ("Реалограмма", self.realogram_img_src)
+        return ("Реалограмма", self._realogram_img_src)
     
     @property
     def user_ids(self):

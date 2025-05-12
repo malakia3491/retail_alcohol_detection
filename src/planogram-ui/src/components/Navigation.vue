@@ -59,7 +59,7 @@
           </li>
         </ul>
       </li>
-
+  
       <!-- Отчёты -->
       <li class="nav-item">
         <button class="nav-button" @click="toggle('reports')">
@@ -80,6 +80,21 @@
           <li>
             <router-link to="/reports/economics" class="subnav-link">
               Отчёт об экономической эффективности планограмм
+            </router-link>
+          </li>
+        </ul>
+      </li>
+
+            <!-- Товары -->
+      <li class="nav-item">
+        <button class="nav-button" @click="toggle('helps')">
+          Помощь
+          <span class="arrow" :class="{ open: openItem === 'helps' }">▾</span>
+        </button>
+        <ul class="subnav" v-show="openItem === 'helps'">
+          <li>
+            <router-link to="/help/notification" class="subnav-link">
+              Уведомления
             </router-link>
           </li>
         </ul>

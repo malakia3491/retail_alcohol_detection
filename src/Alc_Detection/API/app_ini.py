@@ -39,7 +39,6 @@ class ModulesInitializer:
         self.config_reader = IniConfigReader(
                     path_to_config="C:\\Users\\pyatk\\Desktop\\Nikita\\source\\retail_alcohol_detection\\src\\Alc_Detection\\Persistance\\Configs\\config.ini"
         )
-        self.tg_starter = TelegramInitializer(self.config_reader)
         self.db_starter = DbInitializer(self.config_reader)
         self.controllers_dict = {}
     
@@ -85,7 +84,10 @@ class ModulesInitializer:
                                  planogram_save_dir=self.config_reader.get_save_dir_path("planogram_images"))
         image_generator = ProductMatrixImageGenerator(image_saver=image_saver)          
                 
-        # messanger = await self._initialize_notification_module()
+        # messanger = await self._initialize_notification_module(
+        #     config_reader=self.config_reader,
+        #     person_repository=person_repository
+        # )
         messanger = None
         settings = Settings(
             faces_count=1,
@@ -120,7 +122,9 @@ class ModulesInitializer:
             pwd_context=pwd_context,
             store_serivce=store_service
         )
-        self._initialize_auth_module(auth_service=auth_service) 
+        self._initialize_auth_module(
+            auth_service=auth_service
+        ) 
         
         incident_manager = self._initialize_incident_management(
             store_service=store_service,
@@ -140,16 +144,18 @@ class ModulesInitializer:
         
         self._include_routers(self.controllers_dict)
     
-    async def _initialize_db(self,
-                             product_mapper, 
-                             person_mapper, 
-                             shelving_mapper,  
-                             planogram_mapper, 
-                             planogram_order_mapper,
-                             store_mapper,
-                             post_mapper,
-                             shift_mapper,
-                             schedule_mapper):
+    async def _initialize_db(
+        self,
+        product_mapper, 
+        person_mapper, 
+        shelving_mapper,  
+        planogram_mapper, 
+        planogram_order_mapper,
+        store_mapper,
+        post_mapper,
+        shift_mapper,
+        schedule_mapper
+    ):
         session_factory = await self.db_starter.initialize()
         permition_repository = PermitionRepository(
             session_factory=session_factory,
@@ -178,7 +184,7 @@ class ModulesInitializer:
                                               person_mapper=person_mapper)
         
         product_repository= ProductRepository(session_factory=session_factory,
-                                              embedding_model_version="standard",
+                                              embedding_model_version="last",
                                               cache=InMemoryCache(),
                                               product_mapper=product_mapper)
         
@@ -194,13 +200,15 @@ class ModulesInitializer:
         self.controllers_dict["auth_controller"] = (controller, ("/auth", "auth"))
         return auth_service
     
-    async def _initialize_videoanalytics(self,
-                                         image_saver: ImageSaver,
-                                         incident_management_service: IncidentManager,
-                                         store_service: StoreService,
-                                         store_repository: StoreRepository,
-                                         product_repository: ProductRepository,
-                                         embedding_model_repository: EmbeddingModelRepository):
+    async def _initialize_videoanalytics(
+        self,
+        image_saver: ImageSaver,
+        incident_management_service: IncidentManager,
+        store_service: StoreService,
+        store_repository: StoreRepository,
+        product_repository: ProductRepository,
+        embedding_model_repository: EmbeddingModelRepository
+    ):
         device = "cuda:0" if torch.cuda.is_available() else "cpu"
         modelLoader = ModelLoader(device=device,
                                   config_reader=self.config_reader)
@@ -212,7 +220,7 @@ class ModulesInitializer:
         bottles_detector_service = BottleModelDetectionService(detection_model=modelLoader.get_bottle_detector("standard"))
         bottle_classifier_service = BottleClassifierService(preprocessor=cropPreprocessor,
                                                             classifier=modelLoader.get_bottle_classifier(),
-                                                            siamese_model=modelLoader.bottle_embedding_model("standard"),
+                                                            siamese_model=modelLoader.bottle_embedding_model("last"),
                                                             cache=InMemoryCache(),
                                                             device=device)      
         shelfService = ShelfService(preprocessor=imagePreprocessor,
@@ -245,11 +253,18 @@ class ModulesInitializer:
                                            settings=settings)
         return incident_manager
     
-    async def _initialize_notification_module(self):
-        messanger = await self.tg_starter.initialize()
+    async def _initialize_notification_module(
+        self,
+        config_reader: IniConfigReader,
+        person_repository: PersonRepository
+    ):
+        tg_starter = TelegramInitializer(
+            config_reader=config_reader,
+            person_repository=person_repository
+        )
+        messanger = await tg_starter.initialize()
         controller = TelegramBotContoller(
-            api_token=messanger._api_token,
-            dispetcher=messanger.dispatcher
+            messenger=messanger
         )
         self.controllers_dict["telegram_bot_controller"] = (controller, ("/webhook", "telegram bot"))
         return messanger

@@ -23,7 +23,7 @@ class ImagePreprocessor:
             transforms.ToPILImage(),
             transforms.Resize(output_size),
             transforms.ToTensor(),
-            transforms.Normalize(mean=mean, std=std)
+            transforms.Normalize(mean=mean, std=std)    
         ])
         self.allowed_mime_types = ["image/jpeg", "image/jpg", "image/png", "image/webp"]
         

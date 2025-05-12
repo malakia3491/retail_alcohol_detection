@@ -4,6 +4,7 @@ from Alc_Detection.Application.Mappers.RealogramMapper import RealogramMapper
 from Alc_Detection.Domain.Shelf.DeviationManagment.IncongruityDeviation import incongruityDeviation
 from Alc_Detection.Domain.Shelf.DeviationManagment.EmptyDeviation import EmptyDeviation
 from Alc_Detection.Domain.Shelf.DeviationManagment.Incident import Incident
+from Alc_Detection.Domain.Shelf.ProductMatrix.Point import Point
 from Alc_Detection.Domain.Shelf.ProductMatrix.ProductBox import ProductBox
 from Alc_Detection.Persistance.Models.Models import Incident as IncidentModel
 from Alc_Detection.Persistance.Models.ShelfDetection.RealogramSnapshot import RealogramSnapshot
@@ -23,7 +24,7 @@ class IncidentMapper:
         if db_model is None: return None
         if not isinstance(db_model, IncidentModel):
             raise ValueError(db_model)
-        persons = [self._person_mapper.map_to_db_model(inc_person.person)
+        persons = [self._person_mapper.map_to_domain_model(inc_person.person)
                    for inc_person in db_model.persons]
         
         deviations = []
@@ -35,7 +36,7 @@ class IncidentMapper:
                         id=detection.id,
                         product=product,
                         is_empty=True,
-                        is_incorrect_position=False),                        
+                        is_incorrect_position=False).load_positions(Point(x=detection.matrix_cords[0], y=detection.matrix_cords[1])),                        
                     elimination_time=detection.elimination_time)
             elif(detection.is_incorrect_pos):
                 deviation = incongruityDeviation(
@@ -43,7 +44,7 @@ class IncidentMapper:
                         id=detection.id,
                         product=product,
                         is_empty=True,
-                        is_incorrect_position=False),
+                        is_incorrect_position=False).load_positions(Point(x=detection.matrix_cords[0], y=detection.matrix_cords[1])),
                     elimination_time=detection.elimination_time,
                     right_product=self._product_mapper.map_to_domain_model(detection.right_product))
             deviations.append(deviation)

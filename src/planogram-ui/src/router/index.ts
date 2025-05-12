@@ -7,6 +7,7 @@ import { personsRoutes } from './persons'
 import { realogramsRoutes } from './realograms'
 import { reportsRouters } from './reports'
 import { authStore } from '@/auth/store'
+import { helpsRoutes } from './helps'
 
 const routes = [
   { path: '/', redirect: '/home' },
@@ -16,7 +17,8 @@ const routes = [
   ...productsRoutes,
   ...personsRoutes,
   ...realogramsRoutes,
-  ...reportsRouters
+  ...reportsRouters,
+  ...helpsRoutes
 ]
 
 const router = createRouter({

@@ -25,11 +25,11 @@ class AuthService:
 
     async def authenticate(
         self, 
-        username: str, 
+        email: str, 
         password: str
     ) -> Optional[AuthResponse]:
         """Аутентификация пользователя по логину и паролю"""
-        user = await self.user_repo.find_by_username(username)
+        user = await self.user_repo.find_by_email(email)
         if not user or not self.pwd_context.verify(password, user.password_hash):
             raise InvalidCredentialsException("Invalid username or password")
         
@@ -83,6 +83,7 @@ class AuthService:
                 id=user.id,
                 telegram_id=user.telegram_id,
                 name=user.name,
+                email=user.email,
                 store=store_rep,
                 shift=shift_rep,
                 post=post_response,

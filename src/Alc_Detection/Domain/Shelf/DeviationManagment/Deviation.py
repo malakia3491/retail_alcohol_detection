@@ -26,6 +26,10 @@ class Deviation:
         return self._product_box.product
     
     @property
+    def is_resolved(self):
+        return not self.elimination_time is None 
+    
+    @property
     def product_box(self):
         return self._product_box
     
@@ -84,6 +88,12 @@ class Deviation:
     def __eq__(self, value):
         return isinstance(value, Deviation) and \
                self.position == value.position
+
+    def __str__(self):
+        return f"{type(self), self.position}"
+               
+    def __repr__(self):
+        return self.__str__()               
                
     def __hash__(self):
         return hash(self.position)

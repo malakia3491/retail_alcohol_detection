@@ -146,8 +146,7 @@ class Shift:
     def do_work_at(self, date: datetime):
         return not self.schedule.contains(date)
     
-    def get_actual_employees_by(self, *posts: Post):
-        
+    def get_actual_employees_by(self, *posts: Post): 
         employees = []
         for person, staff_position in self.actual_on_shift_assignment.assignments.items():
             if staff_position.post in posts:

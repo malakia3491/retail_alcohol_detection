@@ -1,5 +1,6 @@
 from datetime import datetime
 
+from Alc_Detection.Domain.Shelf.DeviationManagment.Deviation import Deviation
 from Alc_Detection.Domain.Shelf.DeviationManagment.EmptyDeviation import EmptyDeviation
 from Alc_Detection.Domain.Shelf.DeviationManagment.IncongruityDeviation import incongruityDeviation
 from Alc_Detection.Domain.Shelf.Planogram import Planogram
@@ -26,7 +27,7 @@ class Realogram:
     def create_date(self) -> datetime:
         return self._create_date
     
-    @property
+    @property   
     def image_source(self) -> str:
         return self._img_src
     
@@ -57,6 +58,15 @@ class Realogram:
     @property
     def accordance(self) -> float:
         return self._accordance
+    
+    def contains_deviation(self, deviation: Deviation):
+        for realogram_dev in self.empties:
+            if deviation.position == realogram_dev.position:
+                return True
+        for realogram_dev in self.inconsistencies:
+            if deviation.position == realogram_dev.position:
+                return True
+        return False
     
     def _compute_accordance(self) -> float:
         r_matrix = self.product_matrix

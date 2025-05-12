@@ -100,6 +100,9 @@ class ProductBox:
     def copy(self) -> 'ProductBox':
         return self._state.copy(self)
     
+    def is_same_position(self, other: 'ProductBox') -> bool:
+        return self.position == other.position     
+    
     def __eq__(self, other) -> bool:
         return self._state.eq(self, other)
     

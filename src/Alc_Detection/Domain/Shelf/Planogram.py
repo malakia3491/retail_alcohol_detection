@@ -1,4 +1,5 @@
 from datetime import datetime
+import re
 from uuid import UUID
 from Alc_Detection.Domain.Exceptions.Exceptions import InvalidCalibrationBoxes
 from Alc_Detection.Domain.Shelf.ProductMatrix.CalibrationBox import CalibrationBox
@@ -32,6 +33,10 @@ class Planogram:
     @property
     def planogram_order(self):
         return self._order
+    
+    @property
+    def path(self) -> str:
+        return self.img_src
     
     @planogram_order.setter
     def planogram_order(self, value):

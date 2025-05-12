@@ -32,6 +32,12 @@ async def async_main():
     )
 
     app.mount(
+        "/static/planograms",
+        StaticFiles(directory=os.path.join(IMAGES_PATH, "Planograms")),
+        name="planograms"
+    )
+
+    app.mount(
         "/static/realograms",
         StaticFiles(directory=os.path.join(IMAGES_PATH, "Realograms")),
         name="realograms_snapshots"

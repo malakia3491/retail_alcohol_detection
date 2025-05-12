@@ -27,8 +27,6 @@ class EmptyDeviation(Deviation):
         self._is_enough_product = value
 
     def add_responsible_employees(self, person: Person):
-        if not self.is_enough_product:
-            pass
         super().add_responsible_employees(person)
         
     def __eq__(self, value):

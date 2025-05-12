@@ -248,9 +248,10 @@ class StoreService:
         store_id: UUID,
         order_id: UUID,
         shelving_id: UUID,
-        calibration_boxes: List
+        calibration_boxes: List,
+        path: str
     ) -> str:
-        return await self.planogram_service.calibrate_store_planogram(person_id, store_id, order_id, shelving_id, calibration_boxes)
+        return await self.planogram_service.calibrate_store_planogram(person_id, store_id, order_id, shelving_id, calibration_boxes, path)
 
     async def get_last_agreed_planograms(self) -> dict:
         return await self.planogram_service.get_last_agreed_planograms()

@@ -1,32 +1,30 @@
-from datetime import datetime
 import traceback
-from Alc_Detection.Application.IncidentManagement.Services.IncidentManager import IncidentManager
-from Alc_Detection.Domain.Shelf.Realogram import Realogram
-from Alc_Detection.Persistance.Repositories.StoreRepository import StoreRepository
-from PIL import Image, ImageDraw
-import cv2
 import numpy as np
+from PIL import Image
+from datetime import datetime
 from collections import defaultdict
 from fastapi import HTTPException, UploadFile, status
 from sklearn.cluster import AgglomerativeClustering
 from ultralytics.engine.results import Results 
 
+from Alc_Detection.Domain.Entities import *
+from Alc_Detection.Domain.Shelf.Realogram import Realogram
+from Alc_Detection.Domain.NetworkModels.Embedding import Embedding
+from Alc_Detection.Domain.NetworkModels.Image import Image
+from Alc_Detection.Domain.Shelf.ProductMatrix.CalibrationBox import CalibrationBox
+
+from Alc_Detection.Application.IncidentManagement.Services.IncidentManager import IncidentManager
 from Alc_Detection.Application.Requests.Models import CalibrationBoxesResponse
-from Alc_Detection.Application.Requests.Requests import AddCalibrationBoxesRequest
 from Alc_Detection.Application.StoreInformation.Services.StoreServiceFacade import StoreService
 from Alc_Detection.Application.VideoAnalytics.ImageProcessing.ImageSaver import ImageSaver
-from Alc_Detection.Domain.Entities import *
 from Alc_Detection.Application.VideoAnalytics.Exceptions.Exceptions import NotCorrectImageFile
 from Alc_Detection.Application.VideoAnalytics.ImageProcessing.ImagePreprocessor import ImagePreprocessor
 from Alc_Detection.Application.VideoAnalytics.Detection.Services.BottleModelDetectionService import BottleModelDetectionService
 from Alc_Detection.Application.VideoAnalytics.Detection.Services.PersonDetectionService import PersonDetectionService
 from Alc_Detection.Application.VideoAnalytics.Classification.Services.BottleClassifierService import BottleClassifierService
 from Alc_Detection.Application.Requests.Models import CalibrationBox as CalibrationBoxModel 
-from Alc_Detection.Domain.NetworkModels.Embedding import Embedding
-from Alc_Detection.Domain.NetworkModels.EmbeddingModel import EmbeddingNetwork
-from Alc_Detection.Domain.NetworkModels.Image import Image
-from Alc_Detection.Domain.Shelf.ProductMatrix.CalibrationBox import CalibrationBox
-from Alc_Detection.Domain.Shelf.ProductMatrix.Point import Point
+
+from Alc_Detection.Persistance.Repositories.StoreRepository import StoreRepository
 from Alc_Detection.Persistance.Repositories.EmbeddingModelRepository import EmbeddingModelRepository
 from Alc_Detection.Persistance.Repositories.ProductRepository import ProductRepository
 
@@ -65,14 +63,15 @@ class ShelfService:
     ) -> str:
         try:          
             product = await self._product_repository.get(product_id)
-            images = await self.bottle_classifier.preprocess(image_files)
+            pil_imgs = [await self.preprocessor.load(img_file) for img_file in image_files]
+            images = await self.bottle_classifier.preprocess(pil_imgs)
             embeddings = self.bottle_classifier.get_embeddings_from(images).cpu().numpy()                 
             product_images = []
-            for img, emb, file in zip(images, embeddings, image_files):
-                path, _ = self._image_saver.save(image_file=file,
-                                              image=img,
-                                              save_dir=str(product_id),
-                                              obj_type=Product)
+            for img, emb, file in zip(pil_imgs, embeddings, image_files):
+                path = self._image_saver.save_(
+                                                  image=img,
+                                                  save_dir=str(product_id),
+                                                  obj_type=Product)
                 embedding = Embedding(cords=emb,
                                       model=self.bottle_classifier.model)
                 product_images.append(Image(path=path,
@@ -85,21 +84,35 @@ class ShelfService:
             raise ex
     
     async def calibrate_planogram(self,
-                                  request: AddCalibrationBoxesRequest
+                                  order_id: str,
+                                  person_id: str,
+                                  shelving_id: str,
+                                  store_id: str,
+                                  calibration_boxes: list[CalibrationBoxModel],
+                                  image_file: UploadFile,
     ) -> str:
-        positions = self._get_calibration_box_positions(request.calibration_boxes)
+        req_calibration_boxes = [CalibrationBoxModel(xyxy=box_dict["xyxy"], conf=box_dict["conf"])
+                                 for box_dict in calibration_boxes]
+        positions = self._get_calibration_box_positions(req_calibration_boxes)
         
         calibration_boxes = [CalibrationBox(xyxy=box.xyxy,
                                             matrix_cords=position,
                                             conf=box.conf)
-                             for box, position in zip(request.calibration_boxes, positions)]
+                             for box, position in zip(req_calibration_boxes, positions)]
+        
+        img = await self.preprocessor.process(image_file, with_read=True)
+        _, path = self._image_saver.save(image_file=image_file,
+                                         image=img,
+                                         save_dir=str(datetime.now().date()),
+                                         obj_type=Planogram)
         
         message = await self.store_service.calibrate_store_planogram(
-            person_id=request.person_id,
-            store_id=request.store_id,
-            order_id=request.order_id,
-            shelving_id=request.shelving_id,
-            calibration_boxes=calibration_boxes
+            person_id=person_id,
+            store_id=store_id,
+            order_id=order_id,
+            shelving_id=shelving_id,
+            calibration_boxes=calibration_boxes,
+            path=path
         )
         return message         
     
@@ -169,7 +182,7 @@ class ShelfService:
             if len(person_detection_result.boxes) == 0:
                 bottles_detection_result = self.bottle_detector.detect_bottles_on(processed_img=pil_img)
                 return processed_img, bottles_detection_result
-            return None
+            return None, None
         except NotCorrectImageFile:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,

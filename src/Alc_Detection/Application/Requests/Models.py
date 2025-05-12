@@ -85,6 +85,7 @@ class ProductMatrix(BaseModel):
 class Person(BaseModel):
     id: Optional[UUID] = None
     telegram_id: Optional[str] = None
+    email: str
     name: str
     is_store_worker: Optional[bool] = None
     post: Optional[Post] = None
@@ -179,6 +180,7 @@ class PlanogramComplianceReport(BaseModel):
     rows: Dict[str, Dict[str, PlanogramComplianceReportRow]]
     
 class PlanogramUsageReportRow(BaseModel):
+    planogram_date: datetime
     store_name: str
     approval_date: datetime
     approver_name: str

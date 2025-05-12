@@ -32,7 +32,7 @@
           <!-- Метаданные -->
           <div class="realogram-header">
             <div><strong>Дата:</strong> {{ formatDate(real.create_date) }}</div>
-            <div><strong>Соответствие:</strong> {{ real.accordance }}%</div>
+            <div><strong>Соответствие:</strong> {{ real.accordance.toFixed(2) }}%</div>
             <div><strong>Пустых ячеек:</strong> {{ real.empties_count }}</div>
           </div>
   

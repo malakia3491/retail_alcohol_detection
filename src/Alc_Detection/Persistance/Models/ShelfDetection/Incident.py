@@ -17,4 +17,4 @@ class Incident(BaseModel):
     
     detections = relationship("RealogramDetection", back_populates="incident", lazy='selectin')
     store_shift = relationship("StoreShift", back_populates="incidents", lazy='selectin')
-    persons = relationship("PersonIncident", back_populates="incident", lazy='selectin')
+    persons = relationship("PersonIncident", back_populates="incident", cascade="all, delete-orphan", lazy='selectin')

@@ -73,6 +73,13 @@
          >
          Редактировать
          </button>
+        <button
+         class="btn-edit"
+         @click="calibrate"
+         :disabled="isProcessing"
+         >
+         Разметить
+         </button>
       </div>
     </section>
   
@@ -144,6 +151,21 @@
         });
       }
 
+      const calibrate = () => {
+        if (!planogram.value) return;
+        router.push({
+          name: 'CalibratePlanogram',
+          params: {
+            planogram_id: planId,
+          },
+          query: {
+            order_id: orderId,
+            store_id: authStore.user!.store!.id!,
+            shelving_id: planogram.value.shelving.id!
+          }
+        });        
+      }
+
       return {
         base_url,
         planogram,
@@ -151,7 +173,8 @@
         formatDate,
         approve,
         revoke,
-        edit
+        edit,
+        calibrate
       };
     },
   });

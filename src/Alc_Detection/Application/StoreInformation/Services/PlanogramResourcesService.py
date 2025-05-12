@@ -37,15 +37,16 @@ class PlanogramResourcesService:
                  planogram_order_mapper: PlanogramOrderMapper,
                  planogram_mapper: PlanogramMapper,
                  product_matrix_mapper: ProductMatrixMapper,):
-        self._planogram_mapper = planogram_mapper
-        self._image_generator = image_generator
         self._store_repository = store_repository
         self._shelving_repository = shelving_repository
         self._planogram_order_repository = planogram_order_repository
         self._person_repository = person_repository
         self._product_repository = product_repository
+        
+        self._planogram_mapper = planogram_mapper
         self._product_matrix_mapper = product_matrix_mapper
         self._planogram_order_mapper = planogram_order_mapper
+        self._image_generator = image_generator
        
     async def get_planogram(
         self,
@@ -111,7 +112,8 @@ class PlanogramResourcesService:
                                         store_id: str,
                                         order_id: str,
                                         shelving_id: str,
-                                        calibration_boxes: list[CalibrationBox]
+                                        calibration_boxes: list[CalibrationBox],
+                                        path: str
     ) -> str:
         try:
             creator = await self._person_repository.get(person_id)
@@ -123,6 +125,12 @@ class PlanogramResourcesService:
                                           creator=creator,
                                           planogram=agreed_not_calibrated_planogram,
                                           calibration_boxes=calibration_boxes)
+                agreed_not_calibrated_planogram.img_src = path
+                await self._planogram_order_repository.update_planogram(
+                    order_id=order_id,
+                    planogram_id=agreed_not_calibrated_planogram.id,
+                    data={ "img_src": path }
+                )
                 result = await self._store_repository.add_calibration(store=store,
                                                                       calibration=calibration)
                 message = f"Было добавлено {result} колибровок. Координаты для товаров были добавлены."
@@ -192,9 +200,7 @@ class PlanogramResourcesService:
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail=ex.__str__()) 
     
-    async def approve_planogram(self,
-                                request: ApprovePlanogramRequest
-    ) -> str:
+    async def approve_planogram(self, request: ApprovePlanogramRequest) -> str:
         try:
             approver = await self._person_repository.get(request.approver_id)
             order = await self._planogram_order_repository.get(request.order_id)
@@ -221,9 +227,7 @@ class PlanogramResourcesService:
             print(traceback.format_exc())
             raise ex
         
-    async def unapprove_planogram(self,
-                                  request: ApprovePlanogramRequest
-    ) -> str:
+    async def unapprove_planogram(self, request: ApprovePlanogramRequest) -> str:
         try:
             approver = await self._person_repository.get(request.approver_id)
             order = await self._planogram_order_repository.get(request.order_id)

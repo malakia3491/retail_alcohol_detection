@@ -104,6 +104,7 @@ class StoreResourcesService:
                     avg_accord = sum(accords) / len(accords) if accords else 0.0
                     shelf_name = planogram.shelving.name
                     row = PlanogramUsageReportRow(
+                        planogram_date=planogram.create_date,
                         store_name=store.name,
                         approval_date=planogram.approval_date,
                         approver_name=planogram.approver.name,

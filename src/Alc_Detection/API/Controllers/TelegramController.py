@@ -3,17 +3,17 @@ from fastapi.responses import JSONResponse
 from aiogram import Bot, Dispatcher, types
 from aiogram.types import Update
 
+from Alc_Detection.Application.Notification.TelegramBot.TelegramMessanger import TelegramMessenger
+
 class TelegramBotContoller:
     def __init__(self, 
-                 api_token: str,
-                 dispetcher: Dispatcher):
-        self._token = api_token
-        self._dispetcher = dispetcher
+                 messenger: TelegramMessenger):
+        self._messenger = messenger
         self.router = APIRouter()
         self._register_routes()
 
     def _register_routes(self):
-        self.router.add_api_route(f"/{self._token}",
+        self.router.add_api_route(f"",
                                   self.telegram_webhook,
                                   methods=["POST"],
                                   status_code=status.HTTP_200_OK)
@@ -23,8 +23,4 @@ class TelegramBotContoller:
         req: Request
     ) -> Response:
         data = await req.json()
-        update = Update(**data)
-        
-        await self._dispetcher.process_update(update)
-        
-        return Response(status_code=200)
+        return await self._messenger.process(Update(**data))

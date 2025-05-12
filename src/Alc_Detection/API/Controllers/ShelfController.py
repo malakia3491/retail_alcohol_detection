@@ -1,3 +1,4 @@
+import json
 import traceback
 from typing import List
 from uuid import UUID
@@ -7,6 +8,7 @@ from fastapi.responses import JSONResponse
 from Alc_Detection.Application.Requests.Models import CalibrationBoxesResponse
 from Alc_Detection.Application.VideoAnalytics.ShelfService import ShelfService
 from Alc_Detection.Application.Requests.Requests import AddCalibrationBoxesRequest
+from Alc_Detection.Application.Requests.Models import CalibrationBox as CalibrationBoxModel
 
 class ShelfController:
     def __init__(self, 
@@ -80,10 +82,23 @@ class ShelfController:
     
     async def calibrate_planogram(
         self,
-        request: AddCalibrationBoxesRequest
+        order_id: UUID = Form(...),
+        person_id: UUID = Form(...),
+        shelving_id: UUID = Form(...),
+        store_id: UUID = Form(...),
+        calibration_boxes: str = Form(...), 
+        image_file: UploadFile = File(...)
     ) -> dict:
         try:      
-            message = await self.shelfService.calibrate_planogram(request)
+            boxes = json.loads(calibration_boxes)
+            message = await self.shelfService.calibrate_planogram(
+                order_id = order_id,
+                person_id = person_id,
+                shelving_id = shelving_id,
+                store_id = store_id,
+                calibration_boxes = boxes,
+                image_file = image_file,
+            )
             return {"message": message}        
         except HTTPException as he:
             raise he        

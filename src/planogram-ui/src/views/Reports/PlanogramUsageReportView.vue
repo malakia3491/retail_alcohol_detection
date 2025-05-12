@@ -41,7 +41,7 @@
               :key="`${shelf}-${planId}`"
             >
               <td>{{ shelf }}</td>
-              <td>{{ planId }}</td>
+              <td>{{ "От " + formatDate(row.planogram_date) }}</td>
               <td>{{ row.store_name }}</td>
               <td>{{ formatDate(row.approval_date) }}</td>
               <td>{{ row.approver_name }}</td>

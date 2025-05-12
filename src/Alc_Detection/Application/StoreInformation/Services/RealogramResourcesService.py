@@ -38,14 +38,9 @@ class RealogramResourcesService:
                  planogram_order_mapper: PlanogramOrderMapper,
                  planogram_mapper: PlanogramMapper,
                  product_matrix_mapper: ProductMatrixMapper,):
-        self._planogram_mapper = planogram_mapper
         self._store_repository = store_repository
         self._shelving_repository = shelving_repository
-        self._planogram_order_repository = planogram_order_repository
-        self._person_repository = person_repository
-        self._product_repository = product_repository
         self._product_matrix_mapper = product_matrix_mapper
-        self._planogram_order_mapper = planogram_order_mapper
         
     async def get_actual_realograms(
         self,

@@ -28,10 +28,11 @@ class PersonManagementService:
                  schedule_mapper: ScheduleMapper,
                  permition_repository: PermitionRepository
     ):
-        self._shift_mapper = shift_mapper
         self._post_repository = post_repository
         self._store_repository = store_repository
         self._person_repository = person_repository
+        
+        self._shift_mapper = shift_mapper
         self._schedule_mapper = schedule_mapper
         self._permition_repository = permition_repository
 

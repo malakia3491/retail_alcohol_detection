@@ -27,6 +27,7 @@ from Alc_Detection.Persistance.Models.Models import RealogramDetection as Realog
 from Alc_Detection.Persistance.Models.Models import Incident as IncidentModel
 from Alc_Detection.Persistance.Models.Models import StoreShift as ShiftModel
 from Alc_Detection.Persistance.Models.Models import ShiftAssignment as ShiftAssignmentModel
+from Alc_Detection.Persistance.Models.ShelfDetection.PersonIncident import PersonIncident
 from Alc_Detection.Persistance.Models.ShelfDetection.RealogramDetection import RealogramDetection
 from Alc_Detection.Persistance.Models.StoreModels.ShiftPostPerson import ShiftPostPerson
 from Alc_Detection.Persistance.Models.StoreModels.Person import Person as PersonModel
@@ -197,10 +198,12 @@ class StoreRepository:
         if self._cache.contains(store):
             incidents_db = []
             for incident in incidents:
-                persons = []
+                incident_persons = []
                 for person in incident.responsible_employees:
-                    person = self._person_mapper.map_to_db_model(person)
-                    persons.append(person)
+                    incident_person = PersonIncident(
+                        person_id = person.id                   
+                    )
+                    incident_persons.append(incident_person)
                 detections = []
                 for deviation in incident.deviations:
                     r_product_id = deviation.right_product.id if deviation.product_box.is_incorrect_position else None
@@ -220,7 +223,7 @@ class StoreRepository:
                     store_shift_id=shift.id,
                     send_time=incident.send_time,
                     message=incident.build_message_text(),
-                    persons=persons,
+                    persons=incident_persons,
                     type=incident.type,
                     detections=detections                
                 )

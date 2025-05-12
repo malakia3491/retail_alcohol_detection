@@ -14,6 +14,7 @@ export interface PlanogramComplianceReport {
 }
 
 export interface PlanogramUsageReportRow {
+    planogram_date: string;
     store_name: string;
     approval_date: string;       // ISO date string
     approver_name: string;

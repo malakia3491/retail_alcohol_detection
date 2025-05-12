@@ -12,6 +12,7 @@ class Person(BaseModel):
     telegram_id = Column(String, unique=True)
     
     name = Column(String)
+    email = Column(String, unique=True)
     is_store_worker = Column(Boolean)
     is_active = Column(Boolean, default=True)
     password_hash = Column(String(128)) 
