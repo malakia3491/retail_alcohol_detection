@@ -1,7 +1,9 @@
 from datetime import datetime
 from uuid import UUID
+
 from Alc_Detection.Application.Requests.Models import Person
 from Alc_Detection.Domain.Date.extensions import Period
+from Alc_Detection.Domain.RetailModel import RetailModel
 from Alc_Detection.Domain.Shelf.DeviationManagment.Incident import Incident
 from Alc_Detection.Domain.Shelf.Calibration import Calibration
 from Alc_Detection.Domain.Shelf.Planogram import Planogram
@@ -10,14 +12,16 @@ from Alc_Detection.Domain.Store.PersonManagment.Post import Post
 from Alc_Detection.Domain.Store.PersonManagment.Shift import Shift
 from Alc_Detection.Domain.Store.Shelving import Shelving
 
-class Store:
+class Store(RetailModel):
     def __init__(self,
                  name,
                  calibrations:list[Calibration]=[],
                  realograms:list[Realogram]=[],
                  shifts:list[Shift]=[],
                  is_office:bool=False,
+                 retail_id: str=None,
                  id=None):
+        super().__init__(retail_id=retail_id)
         self.id = id
         self.name = name 
         self._is_office = is_office

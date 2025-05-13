@@ -1,3 +1,5 @@
+from Alc_Detection.Persistance.Models.BaseStoreModel import BaseStoreModel
+
 from Alc_Detection.Persistance.Models.Networks.Embedding import Embedding
 from Alc_Detection.Persistance.Models.Networks.EmbeddingModel import EmbeddingModel
 from Alc_Detection.Persistance.Models.Networks.ProductImage import ProductImage

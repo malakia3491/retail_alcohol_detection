@@ -5,8 +5,9 @@ from sqlalchemy import (
 from sqlalchemy.dialects.postgresql import UUID
 
 from Alc_Detection.Persistance.Models.BaseModel import BaseModel
+from Alc_Detection.Persistance.Models.BaseStoreModel import BaseStoreModel
     
-class Person(BaseModel):
+class Person(BaseStoreModel):
     __tablename__ = "persons"
     
     telegram_id = Column(String, unique=True)

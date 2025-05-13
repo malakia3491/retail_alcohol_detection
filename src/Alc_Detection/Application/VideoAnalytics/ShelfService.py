@@ -137,6 +137,7 @@ class ShelfService:
         img, product_matrix = await self._get_product_matrix_by_shelf_image(image_file)       
         if product_matrix is not None:
             product_matrix = await self.bottle_classifier.classificate(img, product_matrix)
+            
             product_matrix = self._get_realogram(product_matrix,
                                                  planogram.product_matrix,
                                                  img.shape)

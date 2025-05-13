@@ -3,8 +3,9 @@ from sqlalchemy import (
     Column, String
 )
 from Alc_Detection.Persistance.Models.BaseModel import BaseModel
+from Alc_Detection.Persistance.Models.BaseStoreModel import BaseStoreModel
     
-class Permition(BaseModel):
+class Permition(BaseStoreModel):
     __tablename__ = "permitions"
         
     name = Column(String)

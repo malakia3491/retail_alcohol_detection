@@ -2,6 +2,7 @@ from uuid import UUID
 from datetime import datetime, time
 
 from Alc_Detection.Domain.Date.extensions import Period
+from Alc_Detection.Domain.RetailModel import RetailModel
 from Alc_Detection.Domain.Shelf.DeviationManagment.Incident import Incident
 from Alc_Detection.Domain.Store.PersonManagment.Person import Person
 from Alc_Detection.Domain.Store.PersonManagment.Post import Post
@@ -10,7 +11,7 @@ from Alc_Detection.Domain.Store.PersonManagment.ShiftAssignment import ShiftAssi
 from Alc_Detection.Domain.Store.PersonManagment.StaffPosition import StaffPosition
 from Alc_Detection.Domain.Store.Shelving import Shelving
 
-class Shift:
+class Shift(RetailModel):
     def __init__(
         self,
         name: str,
@@ -20,8 +21,10 @@ class Shift:
         schedules: list[Schedule]=[],
         on_shift_assignments: list[ShiftAssignment]=[],
         incidents: list[Incident]=[],
+        retail_id: str=None,
         id: UUID=None,
     ):
+        super().__init__(retail_id=retail_id)                
         self.id = id
         self.name = name 
         self._work_time = work_time

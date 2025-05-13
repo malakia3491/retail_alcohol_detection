@@ -57,7 +57,8 @@ class BottleClassifierService(ClassificationService):
             embeddings = self.get_embeddings_from(crops)
             with torch.no_grad():
                 labels = self._classifier(embeddings)
-            shelf.set_products(self.convert_labels_to_products(labels))                   
+            products = self.convert_labels_to_products(labels)
+            shelf.set_products(products)                   
         return product_matrix
     
     def convert_labels_to_products(self, labels: list[int]) -> list[Product]:

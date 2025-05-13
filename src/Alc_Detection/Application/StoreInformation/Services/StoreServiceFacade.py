@@ -6,6 +6,7 @@ from Alc_Detection.Application.IncidentManagement.Settings import Settings
 from Alc_Detection.Application.Mappers.ScheduleMapper import ScheduleMapper
 from Alc_Detection.Application.Mappers.ShiftMapper import ShiftMapper
 from Alc_Detection.Application.Mappers.StoreMapper import StoreMapper
+from Alc_Detection.Application.RetailAPI.ProductsService import ProductsService
 from Alc_Detection.Application.StoreInformation.Services.RealogramResourcesService import RealogramResourcesService
 from Alc_Detection.Application.StoreInformation.Services.PersonManagementService import PersonManagementService
 from Alc_Detection.Application.StoreInformation.Services.PlanogramOrderResourcesService import PlanogramOrderResourcesService
@@ -78,6 +79,7 @@ class StoreService:
         planogram_order_mapper: PlanogramOrderMapper,
         planogram_mapper: PlanogramMapper,
         product_matrix_mapper: ProductMatrixMapper,
+        products_api_service: ProductsService,
         settings: Settings,
     ) -> None:
         # Initialize underlying services
@@ -127,7 +129,8 @@ class StoreService:
             product_matrix_mapper=product_matrix_mapper
         )
         self.product_service = ProductResourcesService(
-            product_repository=product_repository
+            product_repository=product_repository,
+            products_api_service=products_api_service
         )
 
     async def get_realogram(self, store_id: str, realogram_id: str) -> Realogram:

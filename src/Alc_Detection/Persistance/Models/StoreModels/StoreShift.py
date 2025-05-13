@@ -4,9 +4,9 @@ from sqlalchemy import (
 )
 from sqlalchemy.dialects.postgresql import UUID
 
-from Alc_Detection.Persistance.Models.BaseModel import BaseModel
+from Alc_Detection.Persistance.Models.BaseStoreModel import BaseStoreModel
 
-class StoreShift(BaseModel):
+class StoreShift(BaseStoreModel):
     __tablename__ = "store_shifts"
     
     store_id = Column(UUID(as_uuid=True), ForeignKey("stores.id"), nullable=False)

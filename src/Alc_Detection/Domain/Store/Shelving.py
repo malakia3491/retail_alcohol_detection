@@ -1,5 +1,9 @@
-class Shelving:
-    def __init__(self, name, shelves_count, id=None):
+from Alc_Detection.Domain.RetailModel import RetailModel
+
+
+class Shelving(RetailModel):
+    def __init__(self, name, shelves_count, retail_id=None, id=None):
+        super().__init__(retail_id=retail_id)
         self.id = id
         self.name = name
         self.shelves_count = shelves_count

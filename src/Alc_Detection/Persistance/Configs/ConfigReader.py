@@ -69,6 +69,14 @@ class IniConfigReader(ConfigReader):
             return token 
         except Exception as ex:
             raise ex
+
+    def get_retail_api_base_url(self) -> str:
+        try:
+            self.config.read(self.path_to_config)
+            url_path = self.config["RetailAPI"]["BASE_URL"]
+            return url_path 
+        except Exception as ex:
+            raise ex        
         
     def get_webhook_url(self) -> str:
         try:

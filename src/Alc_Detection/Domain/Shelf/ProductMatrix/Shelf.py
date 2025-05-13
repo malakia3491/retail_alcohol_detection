@@ -9,7 +9,7 @@ from Alc_Detection.Domain.Store.Product import Product
 class Shelf:
     """Класс, инкапсулирующий полку со списком ProductBox и связанную с ней геометрию"""
     def __init__(self, boxes: List[ProductBox], is_empty: bool = False):
-        self._boxes: List[ProductBox] = self.sort_boxes(boxes.copy())
+        self._boxes: List[ProductBox] = self.sort_boxes(boxes)
         if is_empty:
             for box in self._boxes:
                 box.is_empty = True                       

@@ -3,9 +3,11 @@ import numpy as np
 from Alc_Detection.Domain.NetworkModels.EmbeddingModel import EmbeddingNetwork
 from Alc_Detection.Domain.NetworkModels.Embedding import Embedding
 from Alc_Detection.Domain.NetworkModels.Image import Image
+from Alc_Detection.Domain.RetailModel import RetailModel
 
-class Product:
-    def __init__(self, images: list[Image]=[], name: str="Unknown", label: int=0, id=None):
+class Product(RetailModel):
+    def __init__(self, images: list[Image]=[], name: str="Unknown", label: int=0, retail_id:str=None, id=None):
+        super().__init__(retail_id=retail_id)        
         self.id = id
         self._name = name
         self._label = label
@@ -68,6 +70,7 @@ class Product:
     def copy(self) -> 'Product':
         images = [img.copy() for img in self._images]
         return Product(id=self.id,
+                       retail_id=self.retail_id,
                        name=self.name,
                        images=images)
         

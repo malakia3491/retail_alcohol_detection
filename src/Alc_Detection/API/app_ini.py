@@ -20,6 +20,8 @@ from Alc_Detection.Application.IncidentManagement.Services.IncidentManager impor
 from Alc_Detection.Application.Mappers.Mappers import *
 from Alc_Detection.Application.Mappers.CalibrationMapper import CalibrationMapper
 from Alc_Detection.Application.Mappers.ProductMatrixMapper import ProductMatrixMapper
+from Alc_Detection.Application.RetailAPI.Initializer import Initializer
+from Alc_Detection.Application.RetailAPI.ProductsService import ProductsService
 from Alc_Detection.Application.StoreInformation.Services.StoreServiceFacade import StoreService
 from Alc_Detection.Application.VideoAnalytics.Dependencies import *
 
@@ -40,6 +42,7 @@ class ModulesInitializer:
                     path_to_config="C:\\Users\\pyatk\\Desktop\\Nikita\\source\\retail_alcohol_detection\\src\\Alc_Detection\\Persistance\\Configs\\config.ini"
         )
         self.db_starter = DbInitializer(self.config_reader)
+        self.retail_api_starter = Initializer(self.config_reader)
         self.controllers_dict = {}
     
     def _include_routers(self, controllers_dict):
@@ -79,6 +82,8 @@ class ModulesInitializer:
                                     schedule_mapper=schedule_mapper,
                                     shift_mapper=shift_mapper)
         
+        products_api_service = self.retail_api_starter.initialize()
+        
         image_saver = ImageSaver(product_crop_save_dir=self.config_reader.get_save_dir_path("product_crops"),
                                  realogram_save_dir=self.config_reader.get_save_dir_path("realogram_snapshots"),
                                  planogram_save_dir=self.config_reader.get_save_dir_path("planogram_images"))
@@ -108,6 +113,7 @@ class ModulesInitializer:
             planogram_mapper=planogram_mapper,
             permition_repository=permition_repository,
             store_mapper=store_mapper,
+            products_api_service=products_api_service,
             settings=settings)
         
         token_service = TokenService(
@@ -284,6 +290,7 @@ class ModulesInitializer:
                                  schedule_mapper: ScheduleMapper,
                                  permition_repository: PermitionRepository,
                                  store_mapper: StoreMapper,
+                                 products_api_service: ProductsService,
                                  settings: Settings):   
         store_service = StoreService(store_repository=store_repository,
                                      shelving_repository=shelving_repository,
@@ -299,6 +306,7 @@ class ModulesInitializer:
                                      shift_mapper=shift_mapper,
                                      permition_repository=permition_repository,
                                      store_mapper=store_mapper,
+                                     products_api_service=products_api_service,
                                      settings=settings)
         controller = StoreController(store_service=store_service)
         self.controllers_dict["store_controller"] = (controller, ("/retail", "retail"))

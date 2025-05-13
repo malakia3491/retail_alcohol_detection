@@ -5,8 +5,9 @@ from sqlalchemy import (
 from sqlalchemy.dialects.postgresql import UUID
 
 from Alc_Detection.Persistance.Models.BaseModel import BaseModel
+from Alc_Detection.Persistance.Models.BaseStoreModel import BaseStoreModel
 
-class Store(BaseModel):
+class Store(BaseStoreModel):
     __tablename__ = "stores"
     
     name = Column(String, nullable=False)

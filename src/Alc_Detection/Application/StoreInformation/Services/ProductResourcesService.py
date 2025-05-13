@@ -1,6 +1,7 @@
 import traceback
 from fastapi import HTTPException, status
 
+from Alc_Detection.Application.RetailAPI.ProductsService import ProductsService
 from Alc_Detection.Domain.Entities import *
 from Alc_Detection.Application.Requests.Requests import (
     AddProductsRequest, Product as ProductModel)
@@ -9,15 +10,28 @@ from Alc_Detection.Persistance.Repositories.Repositories import *
 
 class ProductResourcesService:
     def __init__(self,
-                 product_repository: ProductRepository):
+                 product_repository: ProductRepository,
+                 products_api_service: ProductsService
+    ):
         self._product_repository = product_repository
+        self._products_api_service = products_api_service
     
     async def get_actual_product_count(
         self,
         store: Store,
         product: Product
     ) -> int:
-        return 100
+        try:
+            print("СПРАШИВАЕМ КОЛИЧЕСТВО")
+            count = await self._products_api_service.get_actual_product_count(
+                store_id=store.retail_id,
+                product_id=product.retail_id
+            )
+            print(count)
+            return count
+        except Exception as ex:
+            print(traceback.format_exc())
+            return 10000
     
     async def get_products(self) -> ProductsResponse:
         try:

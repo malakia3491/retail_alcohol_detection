@@ -1,19 +1,22 @@
 from datetime import datetime
 from uuid import UUID  
 from Alc_Detection.Domain.Exceptions.Exceptions import ApprovePlanogramInDeclinedOrder
+from Alc_Detection.Domain.RetailModel import RetailModel
 from Alc_Detection.Domain.Shelf.Planogram import Planogram
 from Alc_Detection.Domain.Store.PersonManagment.Person import Person
 from Alc_Detection.Domain.Store.Shelving import Shelving
 
-class PlanogramOrder:
+class PlanogramOrder(RetailModel):
     def __init__(self,
                  author: Person,
                  create_date: datetime,
                  develop_date: datetime,
                  implementation_date: datetime,
                  is_declined: bool = False,
+                 retail_id: str=None,
                  id: UUID = None,
                  shelvings: list[Shelving] = []):
+        super().__init__(retail_id=retail_id)
         self.id = id
         self.author = author
         self.shelving_assignments: dict[Shelving, list[Planogram]] = {}

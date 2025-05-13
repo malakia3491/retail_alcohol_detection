@@ -45,6 +45,11 @@ class IncidentManager:
         store: Store,
         realogram: Realogram
     ) -> None:
+        print("ИНЦИДЕНТ")
+        for id, shelf in realogram.product_matrix:
+            for box in shelf.boxes:
+                print(box.product.retail_id)
+            
         now = datetime.now()  
         shift = store.actual_shift
         unresolved_incidents = shift.get_unresolved_incidents_by_shelving(realogram.shelving)         
@@ -190,7 +195,6 @@ class IncidentManager:
                 
         if len(deviations) >= self._settings.FACES_COUNT:
             employees = shift.get_actual_employees_by(*self._regular_posts)
-            print(employees)
             new_incident = Incident(
                 send_time=datetime.now(),
                 realogram=realogram,

@@ -2,8 +2,9 @@ from sqlalchemy import Column, Integer, String
 from sqlalchemy.orm import relationship
 
 from Alc_Detection.Persistance.Models.BaseModel import BaseModel
+from Alc_Detection.Persistance.Models.BaseStoreModel import BaseStoreModel
  
-class Shelving(BaseModel):
+class Shelving(BaseStoreModel):
     __tablename__ = "shelvings"
     
     shelves_count = Column(Integer)

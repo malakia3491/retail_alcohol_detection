@@ -2,8 +2,9 @@ from sqlalchemy import  UUID, Column, ForeignKey, DateTime
 from sqlalchemy.orm import relationship
 
 from Alc_Detection.Persistance.Models.BaseModel import BaseModel
+from Alc_Detection.Persistance.Models.BaseStoreModel import BaseStoreModel
 
-class PlanogramOrder(BaseModel):
+class PlanogramOrder(BaseStoreModel):
     __tablename__ = "planogram_orders"
     
     person_id = Column(UUID(as_uuid=True), ForeignKey("persons.id"))

@@ -3,8 +3,9 @@ from sqlalchemy.orm import relationship
 from pgvector.sqlalchemy import Vector
 
 from Alc_Detection.Persistance.Models.BaseModel import BaseModel
+from Alc_Detection.Persistance.Models.BaseStoreModel import BaseStoreModel
  
-class Product(BaseModel):
+class Product(BaseStoreModel):
     __tablename__ = "products"
  
     name = Column(String)

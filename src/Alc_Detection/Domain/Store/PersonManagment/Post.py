@@ -1,14 +1,17 @@
 from uuid import UUID
 
+from Alc_Detection.Domain.RetailModel import RetailModel
 from Alc_Detection.Domain.Store.PersonManagment.Permition import Permition
 
-class Post:
+class Post(RetailModel):
     def __init__(
         self,
         name: str,
         permitions: list[Permition]=[],
+        retail_id: str=None,
         id: UUID=None
     ): 
+        super().__init__(retail_id=retail_id)
         self.id = id
         self.name = name
         self._permitions = permitions

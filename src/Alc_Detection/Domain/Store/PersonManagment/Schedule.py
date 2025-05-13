@@ -1,16 +1,19 @@
 from datetime import datetime
 
 from Alc_Detection.Domain.Date.extensions import Period
+from Alc_Detection.Domain.RetailModel import RetailModel
 
-class Schedule:
+class Schedule(RetailModel):
     def __init__(
         self,
         date_assignment: datetime,
         holidays: list[datetime],
         date_from: datetime,
         date_to: datetime,
+        retail_id: str=None,
         id: str=None
     ):
+        super().__init__(retail_id=retail_id)
         self.id = id
         self._date_assignment = date_assignment
         self._holidayes = holidays

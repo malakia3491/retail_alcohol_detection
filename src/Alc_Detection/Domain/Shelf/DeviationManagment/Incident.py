@@ -124,9 +124,6 @@ class Incident:
         
     def contains(self, deviation: Deviation):
         for dev in self.not_resolved_deviations:
-            print("ИЩЕМ", deviation.position)
-            print("РАССМАТРИВАЕМ", dev.position)
-            print(dev.position == deviation.position)
             if dev.position == deviation.position:
                 return True
         return False 

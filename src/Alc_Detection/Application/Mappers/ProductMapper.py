@@ -32,6 +32,7 @@ class ProductMapper:
                         embeddings=embeddings)
             images.append(img)
         return Product(id=db_model.id,
+                       retail_id=db_model.retail_id,
                        label=db_model.label,
                        images=images,
                        name=db_model.name)        
