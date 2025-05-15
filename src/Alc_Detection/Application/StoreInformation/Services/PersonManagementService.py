@@ -187,10 +187,10 @@ class PersonManagementService:
             store = await self._store_repository.get(request.store_id)
             shifts = []
             for req_shift in request.shifts:
-                staff_positions: list[StaffPosition] = {}
+                staff_positions: list[StaffPosition] = []
                 for staff_position in req_shift.staff_positions:
                     post = await self._post_repository.get(staff_position)
-                    staff_positions = StaffPosition(post=post, count=req_shift.staff_positions[staff_position])
+                    staff_positions.append(StaffPosition(post=post, count=req_shift.staff_positions[staff_position]))
                 req_shift.staff_positions = staff_positions
                 shifts.append(self._shift_mapper.map_request_to_domain_model(req_shift))
             store.add_shifts(*shifts)

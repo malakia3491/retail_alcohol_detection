@@ -192,6 +192,7 @@ class PlanogramUsageReportRow(BaseModel):
     calibration_date: datetime
     calibrator_name: str
     avg_accordance_percent: float
+    count: int
 
 class PlanogramUsageReport(BaseModel):
-    rows: Dict[str, Dict[str, PlanogramUsageReportRow]]
+    rows: Dict[str, Dict[str, Dict[str, PlanogramUsageReportRow]]]

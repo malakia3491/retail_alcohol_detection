@@ -85,19 +85,23 @@ class StoreResourcesService:
             end: datetime
         ) -> PlanogramUsageReport:
             stores = await self._store_repository.get_all_not_office()
-            rows: Dict[str, Dict[str, PlanogramUsageReportRow]] = defaultdict(dict)
+            rows: Dict[str, Dict[str, Dict[str, PlanogramUsageReportRow]]] = defaultdict(
+                lambda: defaultdict(dict)
+            )
             start = adjust_day_edge(dt=start, end_of_day=False)
             end = adjust_day_edge(dt=end, end_of_day=True)
+            period = Period(start=start, end=end)
+            
             for store in stores:
-                using_planograms_data = store.get_using_planograms_by_period(Period(start=start, end=end))
-                print(using_planograms_data)
+                using_planograms_data = store.get_using_planograms_by_period(period)
                 if not using_planograms_data: continue
                 for planogram in using_planograms_data:
-                    creator, create_date = using_planograms_data[planogram]
-                    realograms = store.get_realograms_by_shelving(planogram.shelving)
+                    (creator, create_date), pg_period = using_planograms_data[planogram]
+                    realograms = store.get_realograms_by_shelving_period(planogram.shelving, pg_period)
                     accords = [r.accordance for r in realograms]
                     avg_accord = sum(accords) / len(accords) if accords else 0.0
-                    shelf_name = planogram.shelving.name
+                    shelf_name = planogram.shelving.name#
+                    realograms_count = len(realograms)
                     row = PlanogramUsageReportRow(
                         planogram_date=planogram.create_date,
                         store_name=store.name,
@@ -105,6 +109,7 @@ class StoreResourcesService:
                         approver_name=planogram.approver.name,
                         calibration_date=create_date,
                         calibrator_name=creator.name,
-                        avg_accordance_percent=avg_accord)
-                    rows[shelf_name][str(planogram.id)] = row
+                        avg_accordance_percent=avg_accord,
+                        count=realograms_count)
+                    rows[store.name][shelf_name][str(planogram.id)] = row
             return PlanogramUsageReport(rows=rows)

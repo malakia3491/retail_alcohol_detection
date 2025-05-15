@@ -98,7 +98,8 @@ class Shift(RetailModel):
         return incidents
     
     def add_schedule(self, new_schedule: Schedule):
-        if self._schedules:            
+        if self._schedules:
+            print(self._schedules)            
             for schedule in self._schedules:
                 if schedule.is_conflict(new_schedule):
                     raise ValueError(new_schedule)

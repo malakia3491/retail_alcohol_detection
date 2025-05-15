@@ -45,11 +45,6 @@ class IncidentManager:
         store: Store,
         realogram: Realogram
     ) -> None:
-        print("ИНЦИДЕНТ")
-        for id, shelf in realogram.product_matrix:
-            for box in shelf.boxes:
-                print(box.product.retail_id)
-            
         now = datetime.now()  
         shift = store.actual_shift
         unresolved_incidents = shift.get_unresolved_incidents_by_shelving(realogram.shelving)         
@@ -133,10 +128,11 @@ class IncidentManager:
                     not_contains = False
                     break
             if not_contains:
-                actual_product_count = await self._store_service.get_actual_product_count(
-                    store=store,
-                    product=deviation.product
-                )
+                actual_product_count = 1000
+                # actual_product_count = await self._store_service.get_actual_product_count(
+                #     store=store,
+                #     product=deviation.product
+                # )
                 plan_product_count = realogram.planogram.get_need_product_count(
                     product=deviation.product
                 ) 
@@ -145,10 +141,11 @@ class IncidentManager:
                     not_enough_product_deviations.append(deviation)                        
                 else: deviations.append(deviation)   
             if not unresolved_incidents:
-                actual_product_count = await self._store_service.get_actual_product_count(
-                    store=store,
-                    product=deviation.product
-                )
+                actual_product_count = 1000
+                # actual_product_count = await self._store_service.get_actual_product_count(
+                #     store=store,
+                #     product=deviation.product
+                # )
                 plan_product_count = realogram.planogram.get_need_product_count(
                     product=deviation.product
                 ) 

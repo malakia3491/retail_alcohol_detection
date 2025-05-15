@@ -66,7 +66,7 @@ class ShiftMapper:
         if req_model is None: return None
         if not isinstance(req_model, ShiftApiModel):
             raise ValueError(req_model)    
-            
+ 
         return Shift(
             name=req_model.name,
             work_time=(req_model.work_time_start, req_model.work_time_end),

@@ -136,12 +136,66 @@ class Store(RetailModel):
                 return calib
         return None   
      
-    def get_using_planograms_by_period(self, period: Period) -> dict[Planogram, tuple[Person, datetime]]:
-        result: dict[Planogram, tuple[Person, datetime]] = {}
+    # def get_using_planograms_by_period(self, period: Period) -> dict[Planogram, tuple[Person, datetime]]:
+    #     result: dict[Planogram, tuple[Person, datetime]] = {}
+    #     for calibration in self.calibrations:
+    #         if period.between(calibration.create_date) and not calibration.planogram in result:
+    #             result[calibration.planogram] = (calibration.creator, calibration.create_date)
+    #     return result
+    
+    def _get_planogram_calibrations_dict(self) -> dict[Planogram, list[Calibration]]:
+        result: dict[Planogram, list[Calibration]] = {}
         for calibration in self.calibrations:
-            if period.between(calibration.create_date) and not calibration.planogram in result:
-                result[calibration.planogram] = (calibration.creator, calibration.create_date)
+            if not calibration.planogram in result:
+                 result[calibration.planogram] = []
+            result[calibration.planogram].append(calibration)
         return result
+    
+    def get_using_planograms_by_period(self, period: Period) -> dict[Planogram, tuple[tuple[Person, datetime], Period]]:
+        calibrations_by_planogram = self._get_planogram_calibrations_dict() 
+        
+        print("КОЛИЧЕСТВО ПЛАНОГРАММ", len(calibrations_by_planogram.keys()))
+        
+        sorted_planograms = sorted(
+            calibrations_by_planogram.keys(),
+            key=lambda pg: min(c.create_date for c in calibrations_by_planogram[pg])
+        )
+        result = {}
+        
+        for i in range(len(sorted_planograms)):
+            current_pg = sorted_planograms[i]
+            current_calibrations = sorted(
+                calibrations_by_planogram[current_pg], 
+                key=lambda x: x.create_date
+            )
+            
+            last_calibration = current_calibrations[-1]
+            person = last_calibration.creator
+            start_date = last_calibration.create_date
+            if period.between(start_date):
+                if i < len(sorted_planograms) - 1:
+                    next_pg = sorted_planograms[i + 1]
+                    next_calibrations = sorted(
+                        calibrations_by_planogram[next_pg], 
+                        key=lambda x: x.create_date
+                    )
+                    end_date = next_calibrations[0].create_date
+                else:
+                    end_date = period.end        
+                pg_period = Period(start_date, end_date)  
+                result[current_pg] = (
+                    (person, start_date), 
+                    pg_period
+                )
+        return result
+    
+    def get_realograms_by_shelving_period(self, shelving: Shelving, period: Period):
+        realograms = self.get_realograms_by_shelving(shelving)
+        result: list[Realogram] = []
+        for realogram in realograms:
+            if period.between(realogram.create_date):
+                result.append(realogram)
+        return result      
     
     def get_realograms_by_shelving(self, shelving: Shelving) -> list[Realogram]:
         result: list[Realogram] = []

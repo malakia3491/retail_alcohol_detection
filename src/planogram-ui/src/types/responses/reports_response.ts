@@ -21,8 +21,9 @@ export interface PlanogramUsageReportRow {
     calibration_date: string;    // ISO date string
     calibrator_name: string;
     avg_accordance_percent: number;
+    count: number;
   }
   
   export interface PlanogramUsageReport {
-    rows: Record<string, Record<string, PlanogramUsageReportRow>>;
+    rows: Record<string, Record<string, Record<string, PlanogramUsageReportRow>>>;
   }
