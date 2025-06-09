@@ -1,14 +1,11 @@
 from uuid import UUID
+from typing import List 
 from sqlalchemy import select, update, delete
 from sqlalchemy.ext.asyncio import AsyncSession
-from typing import List 
 from sqlalchemy.exc import NoResultFound
 
 from Alc_Detection.Application.Mappers.PostMapper import PostMapper
-from Alc_Detection.Domain.Entities import Product
-from Alc_Detection.Domain.Store.PersonManagment.Permition import Permition
 from Alc_Detection.Domain.Store.PersonManagment.Post import Post
-from Alc_Detection.Persistance.Exceptions import ObjectNotFound
 from Alc_Detection.Persistance.Cache.CacheBase import CacheBase
 from Alc_Detection.Persistance.Models.Models import Post as PostModel
 
@@ -64,3 +61,6 @@ class PostRepository:
         for obj in objs:
             self._cache.put(obj.id, self._post_mapper.map_to_domain_model(obj))
         return len(objs)
+    
+    async def find_by_retail_id(self, retail_id: str) -> Post | None:
+        return self._cache.get_by('retail_id', retail_id)

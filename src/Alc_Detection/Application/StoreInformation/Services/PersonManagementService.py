@@ -11,6 +11,9 @@ from Alc_Detection.Application.StoreInformation.Exceptions.Exceptions import (
 from Alc_Detection.Application.Requests.Requests import (
     AddPermitionsRequest, AddPersonsRequest, AddPostsRequest, AddScheduleRequest, AddShiftAssignment, AddShiftsRequest, DismissPersonRequest,
 )
+from Alc_Detection.Application.Requests.LoadDataIntegration import Store as StoreRetailModel
+from Alc_Detection.Domain.Store.PersonManagment.ShiftAssignment import ShiftAssignment
+from Alc_Detection.Domain.Store.PersonManagment.Schedule import Schedule
 from Alc_Detection.Domain.Store.PersonManagment.Permition import Permition
 from Alc_Detection.Domain.Store.PersonManagment.Post import Post
 from Alc_Detection.Domain.Store.PersonManagment.Shift import Shift
@@ -121,7 +124,17 @@ class PersonManagementService:
             print(traceback.format_exc())
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail=ex.__str__())     
+                detail=ex.__str__())   
+
+    async def load_posts(self, posts: list[Post]) -> str:
+        try:
+            count_added_records = await self._post_repository.add(*posts)
+            return f"Succsessfully. Added {count_added_records} records."
+        except Exception as ex:
+            print(traceback.format_exc())
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=ex.__str__())  
        
     async def add_persons(self, request: AddPersonsRequest) -> str:
         try:
@@ -137,6 +150,16 @@ class PersonManagementService:
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail=ex.__str__())     
+            
+    async def load_persons(self, persons: list[Person]) -> str:
+        try:
+            count_added_records = await self._person_repository.add(*persons)
+            return f"Succsessfully. Added {count_added_records} records."
+        except Exception as ex:
+            print(traceback.format_exc())
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=ex.__str__())    
         
     async def dismiss_employee(self, request: DismissPersonRequest) -> str:
         field = "is_store_worker"             
@@ -195,6 +218,57 @@ class PersonManagementService:
                 shifts.append(self._shift_mapper.map_request_to_domain_model(req_shift))
             store.add_shifts(*shifts)
             count_added_records = await self._store_repository.add_shifts(store, *shifts)
+            return f"Succsessfully. Added {count_added_records} records."
+        except Exception as ex:
+            print(traceback.format_exc())
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=ex.__str__())    
+            
+    async def load_stores(self, retail_stores: list[StoreRetailModel]) -> str:
+        try:
+            stores: list[Store] = []
+            for retail_store in retail_stores:
+                shifts = []
+                for retail_shift in retail_store.shifts:
+                    staff_positions: dict[str, StaffPosition] = {}
+                    for s_p in retail_shift.staff_positions:
+                        post = await self._post_repository.find_by_retail_id(s_p.post.id)
+                        if not post:
+                            raise ValueError(f"Post with retail_id {s_p.post.id} not found.")
+                        staff_positions[s_p.id] = StaffPosition(post=post, retail_id=s_p.id, count=s_p.count)
+                        
+                    on_shift_assignments = []
+                    for retail_shift_assignment in retail_shift.shift_assignments:
+                        assignments: dict[Person, StaffPosition] = {}
+                        for retail_assignment in retail_shift_assignment.workers:
+                            person = await self._person_repository.find_by_retail_id(retail_assignment.person.id)         
+                            if not person:
+                                raise ValueError(f"Post with retail_id {s_p.post.id} not found.")               
+                            assignments[person] = staff_positions[retail_assignment.position.id]    
+                        shift_assigment = ShiftAssignment(assignment_date=retail_shift_assignment.date,
+                                                          assignments=assignments,
+                                                          retail_id=retail_shift_assignment.id)
+                        on_shift_assignments.append(shift_assigment)
+                        
+                    schedules=[Schedule(date_assignment=schedule.write_day,
+                                        holidays=schedule.holidays,
+                                        date_from=schedule.date_from,
+                                        date_to=schedule.date_to, 
+                                        retail_id=schedule.id)
+                               for schedule in retail_shift.schedule]
+                    shift = Shift(
+                        name=retail_shift.name,
+                        work_time=(retail_shift.work_time_start, retail_shift.work_time_end),
+                        break_time=(retail_shift.break_time_start, retail_shift.break_time_end),
+                        staff_positions=[s_p for s_p in staff_positions.values()],
+                        schedules=schedules,
+                        on_shift_assignments=on_shift_assignments,
+                        retail_id=retail_shift.id)
+                    shifts.append(shift)
+                store = Store(name=retail_store.name, is_office=retail_store.is_office, retail_id=retail_store.id, shifts=shifts)
+                stores.append(store)
+            count_added_records = await self._store_repository.add(*stores)
             return f"Succsessfully. Added {count_added_records} records."
         except Exception as ex:
             print(traceback.format_exc())

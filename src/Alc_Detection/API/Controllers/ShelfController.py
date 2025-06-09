@@ -22,6 +22,22 @@ class ShelfController:
         self.router.add_api_route("/calibrations/", self.calibrate_planogram, methods=["POST"], status_code=status.HTTP_200_OK)
         self.router.add_api_route("/calibration_boxes/", self.get_calibration_boxes, methods=["POST"], status_code=status.HTTP_200_OK)
         self.router.add_api_route("/product_images/{product_id}", self.add_product_images, methods=["POST"], status_code=status.HTTP_200_OK)
+        self.router.add_api_route("/images/{store_id}/{shelving_id}", self.get_test_image, methods=["POST"], status_code=status.HTTP_200_OK)
+        
+    async def get_test_image(
+        self,
+        image_file: UploadFile = File(...),
+    ) -> dict:
+        try:      
+            return {"message": "Cool"}        
+        except HTTPException as he:
+            raise he        
+        except Exception as e:
+            traceback.print_exc() 
+            return JSONResponse(
+                content={"message": f"Internal error: {str(e)}"},
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
     
     async def add_product_images(
         self,

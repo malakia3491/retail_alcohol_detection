@@ -17,6 +17,7 @@ class PostMapper:
             )
             permitions.append(permition)
         return Post(id=db_model.id,
+                    retail_id=db_model.retail_id,
                     name=db_model.name,
                     permitions=permitions)
         
@@ -33,6 +34,7 @@ class PostMapper:
             permitions_db.append(permition_db)
         
         return PostModel(
+            retail_id=domain_model.retail_id,
             name=domain_model.name,
             post_permitions=permitions_db
         )

@@ -123,6 +123,7 @@ class ModulesInitializer:
         )
         pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto", bcrypt__rounds=12)
         auth_service = AuthService(
+            store_repository=store_repository,
             user_repository=person_repository,
             token_service=token_service,
             pwd_context=pwd_context,

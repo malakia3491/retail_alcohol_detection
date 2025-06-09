@@ -1,12 +1,12 @@
 from datetime import datetime
 from uuid import UUID  
 from Alc_Detection.Domain.Exceptions.Exceptions import ApprovePlanogramInDeclinedOrder
-from Alc_Detection.Domain.RetailModel import RetailModel
+from Alc_Detection.Domain.IndexNotifiable import IndexNotifiable, indexed
 from Alc_Detection.Domain.Shelf.Planogram import Planogram
 from Alc_Detection.Domain.Store.PersonManagment.Person import Person
 from Alc_Detection.Domain.Store.Shelving import Shelving
 
-class PlanogramOrder(RetailModel):
+class PlanogramOrder(IndexNotifiable):
     def __init__(self,
                  author: Person,
                  create_date: datetime,
@@ -16,8 +16,9 @@ class PlanogramOrder(RetailModel):
                  retail_id: str=None,
                  id: UUID = None,
                  shelvings: list[Shelving] = []):
-        super().__init__(retail_id=retail_id)
+        super().__init__()
         self.id = id
+        self._retail_id = retail_id
         self.author = author
         self.shelving_assignments: dict[Shelving, list[Planogram]] = {}
         for shelving in shelvings:
@@ -26,6 +27,17 @@ class PlanogramOrder(RetailModel):
         self.develop_date = develop_date
         self._is_declined = is_declined
         self.implementation_date = implementation_date
+    
+    @indexed
+    @property
+    def retail_id(self) -> str:
+        return self._retail_id
+    
+    @retail_id.setter
+    def retail_id(self, value: str):
+        old = self._retail_id
+        self._retail_id = value
+        self._notify_index_changed('retail_id', old, value)
         
     def get_planogram(self,                      
                       planogram_id: UUID

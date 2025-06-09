@@ -2,7 +2,7 @@ from datetime import datetime
 from Alc_Detection.Domain.Store.PersonManagment.Schedule import Schedule
 from Alc_Detection.Domain.Store.PersonManagment.Shift import Shift
 from Alc_Detection.Persistance.Models.StoreModels.PlanWorkTime import PlanWorkTime as ScheduleModel 
-from Alc_Detection.Application.Requests.Models import Schedule as ScheduleApiModel
+from Alc_Detection.Application.Requests.person_management import Schedule as ScheduleApiModel
 from Alc_Detection.Persistance.Models.Models import PlanSchedule as PlanScheduleModel 
 
 class ScheduleMapper:
@@ -16,6 +16,7 @@ class ScheduleMapper:
             holidays.append(holiday_db.date)
 
         schedule = Schedule(
+            retail_id=db_model.retail_id,
             date_assignment=db_model.write_date,
             holidays=holidays,
             date_from=db_model.date_from,
@@ -51,6 +52,7 @@ class ScheduleMapper:
             plan_days.append(plan_day)        
         return ScheduleModel(
             store_shift_id=shift.id,
+            retail_id=shift.retail_id,
             write_date=domain_model.date_assignment,
             date_from=domain_model.period.start,
             date_to=domain_model.period.end,

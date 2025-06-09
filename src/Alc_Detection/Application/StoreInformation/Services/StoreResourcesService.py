@@ -1,12 +1,18 @@
-from collections import defaultdict
-from datetime import datetime
+import traceback
 from typing import Dict
+from datetime import datetime
+from collections import defaultdict
+from fastapi import HTTPException, status
+
 from Alc_Detection.Application.IncidentManagement.Settings import Settings
 from Alc_Detection.Application.Mappers.StoreMapper import StoreMapper
-from Alc_Detection.Application.Requests.Models import PlanogramComplianceReport, PlanogramComplianceReportRow, PlanogramUsageReport, PlanogramUsageReportRow, StoresResponse
+from Alc_Detection.Application.Requests.Reports import PlanogramComplianceReport, PlanogramComplianceReportRow, PlanogramUsageReport, PlanogramUsageReportRow
+from Alc_Detection.Application.Requests.Requests import AddStoresRequest
+from Alc_Detection.Application.Requests.Responses import StoresResponse
 from Alc_Detection.Domain.Date.extensions import Period
 from Alc_Detection.Domain.Extentions.Utils import adjust_day_edge
 from Alc_Detection.Domain.Shelf.DeviationManagment.Incident import Incident
+from Alc_Detection.Domain.Store.Store import Store
 from Alc_Detection.Persistance.Repositories.StoreRepository import StoreRepository
 
 class StoreResourcesService:
@@ -19,12 +25,42 @@ class StoreResourcesService:
         self._store_repository = store_repository
         self._store_mapper = store_mapper
         self._settings = settings
+    
+    async def get_store_by_login(self, login: str) -> Store:
+        store = await self._store_repository.get_by_login(login)
+        if not store:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Store with login {login} not found."
+            )
+        return store
         
     async def get_stores(self) -> StoresResponse:
         stores = await self._store_repository.get_all_not_office()
         return StoresResponse(
             stores=[self._store_mapper.map_to_response_model(store) for store in stores ]
         )
+    
+    async def add_stores(self, request: AddStoresRequest) -> str:
+        try:
+            stores = [Store(name=store.name) for store in request.stores]
+            count_added_records = await self._store_repository.add(*stores)
+            return f"Succsessfully. Added {count_added_records} records."
+        except Exception as ex:
+            print(traceback.format_exc())
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=ex.__str__())      
+
+    async def load_stores(self, stores: list[Store]) -> str:
+        try:
+            count_added_records = await self._store_repository.add(*stores)
+            return f"Succsessfully. Added {count_added_records} records."
+        except Exception as ex:
+            print(traceback.format_exc())
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=ex.__str__())   
         
     async def generate_planogram_compliance_report(self, start: datetime, end: datetime) -> PlanogramComplianceReport:
         rows = defaultdict(dict)
@@ -85,9 +121,7 @@ class StoreResourcesService:
             end: datetime
         ) -> PlanogramUsageReport:
             stores = await self._store_repository.get_all_not_office()
-            rows: Dict[str, Dict[str, Dict[str, PlanogramUsageReportRow]]] = defaultdict(
-                lambda: defaultdict(dict)
-            )
+            rows: Dict[str, Dict[str, PlanogramUsageReportRow]] = defaultdict()
             start = adjust_day_edge(dt=start, end_of_day=False)
             end = adjust_day_edge(dt=end, end_of_day=True)
             period = Period(start=start, end=end)
@@ -100,9 +134,10 @@ class StoreResourcesService:
                     realograms = store.get_realograms_by_shelving_period(planogram.shelving, pg_period)
                     accords = [r.accordance for r in realograms]
                     avg_accord = sum(accords) / len(accords) if accords else 0.0
-                    shelf_name = planogram.shelving.name#
+                    shelving_name = planogram.shelving.name#
                     realograms_count = len(realograms)
                     row = PlanogramUsageReportRow(
+                        shelving_name=shelving_name,
                         planogram_date=planogram.create_date,
                         store_name=store.name,
                         approval_date=planogram.approval_date,
@@ -111,5 +146,5 @@ class StoreResourcesService:
                         calibrator_name=creator.name,
                         avg_accordance_percent=avg_accord,
                         count=realograms_count)
-                    rows[store.name][shelf_name][str(planogram.id)] = row
+                    rows[store.name][str(planogram.id)] = row
             return PlanogramUsageReport(rows=rows)

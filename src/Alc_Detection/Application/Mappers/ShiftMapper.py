@@ -11,8 +11,11 @@ from Alc_Detection.Domain.Store.PersonManagment.Person import Person
 from Alc_Detection.Domain.Store.PersonManagment.Shift import Shift
 from Alc_Detection.Domain.Store.PersonManagment.ShiftAssignment import ShiftAssignment
 from Alc_Detection.Persistance.Models.Models import StoreShift as StoreShiftModel
-from Alc_Detection.Application.Requests.Models import Shift as ShiftApiModel
+from Alc_Detection.Persistance.Models.Models import Post as PostModel
+from Alc_Detection.Application.Requests.person_management import Shift as ShiftApiModel
 from Alc_Detection.Persistance.Models.Models import ShiftPost as ShiftPostModel
+from Alc_Detection.Persistance.Models.Models import ShiftPostPerson as ShiftPostPersonModel
+from Alc_Detection.Persistance.Models.Models import ShiftAssignment as ShiftAssignmentModel
 
 class ShiftMapper:
     def __init__(
@@ -54,6 +57,7 @@ class ShiftMapper:
                              for id, date in zip(on_shift_assignments, dates)]                              
         return Shift(
             id=db_model.id,
+            retail_id=db_model.retail_id,
             name=db_model.name,
             work_time=(db_model.time_work_start, db_model.time_work_end),
             break_time=(db_model.time_break_start, db_model.time_break_end),
@@ -79,17 +83,44 @@ class ShiftMapper:
         if domain_model is None: return None
         if not isinstance(domain_model, Shift):
             raise ValueError(domain_model)        
-        
+                
         shift_posts: list[ShiftPostModel] = []
         for post, staff_position in domain_model.staff_positions.items():
-            shift_post = ShiftPostModel(
-                post_id=post.id,
-                count=staff_position.count)
+            shift_post = ShiftPostModel(post_id=post.id,
+                                        retail_id=staff_position.retail_id,
+                                        count=staff_position.count)
             shift_posts.append(shift_post)
+            
+        position_to_shift_post_person: dict[str, list] = {}
+        for shift_assignment in domain_model.shift_assignments:
+            db_shift_assignment = ShiftAssignmentModel(
+                assignment_date=shift_assignment.date,
+                retail_id=shift_assignment.retail_id,                
+            )
+            for person, staff_position in shift_assignment.assignments.items():
+                curr_db_staff_position = None
+                for db_shift_post in shift_posts:
+                    if db_shift_post.post_id == staff_position.post.id:
+                        curr_db_staff_position = db_shift_post
+                        position_to_shift_post_person[staff_position.post.id] = [] 
+                        break
+                position_to_shift_post_person[staff_position.post.id].append(
+                    ShiftPostPersonModel(
+                        person_id=person.id,
+                        shift_post=curr_db_staff_position,
+                        shift_assignment=db_shift_assignment,
+                    )
+                )
+        for post_id, shift_post_persons in position_to_shift_post_person.items():
+            for shift_post in shift_posts:
+                if shift_post.post_id == post_id:
+                    shift_post.shift_post_persons = shift_post_persons
+
         db_schedules = [] 
         for schedule in domain_model.schedules:
             if schedule: db_schedules.append(self._schedule_mapper.map_to_db_model(shift=domain_model, domain_model=schedule))
         return StoreShiftModel(
+            retail_id=domain_model.retail_id,
             store_id=store.id,
             name=domain_model.name,
             time_work_start=domain_model.work_time.start,

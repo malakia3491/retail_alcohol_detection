@@ -10,6 +10,7 @@ class PersonMapper:
             raise ValueError(db_model)        
         
         return Person(id=db_model.id,
+                      retail_id=db_model.retail_id,
                       name=db_model.name,
                       email=db_model.email,
                       telegram_id=db_model.telegram_id,
@@ -22,6 +23,7 @@ class PersonMapper:
         if not isinstance(domain_model, Person):
             raise ValueError(domain_model)
         return PersonModel(name=domain_model.name,
+                           retail_id=domain_model.retail_id,
                            telegram_id=domain_model.telegram_id,
                            email=domain_model.email,
                            is_store_worker=domain_model.is_store_worker)

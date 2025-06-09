@@ -1,6 +1,7 @@
 
 import traceback
 from fastapi import HTTPException, status
+from Alc_Detection.Application.Requests.Responses import ShelvingsResponse
 from Alc_Detection.Domain.Entities import *
 from Alc_Detection.Application.StoreInformation.Exceptions.Exceptions import (
      InvalidObjectId,
@@ -8,7 +9,6 @@ from Alc_Detection.Application.StoreInformation.Exceptions.Exceptions import (
 from Alc_Detection.Application.Requests.Requests import (
     AddShelvingsRequest, Shelving as ShelvingModel)
 
-from Alc_Detection.Application.Requests.Models import ShelvingsResponse
 from Alc_Detection.Persistance.Repositories.Repositories import *
 
 class ShelvingResourcesService:
@@ -63,4 +63,14 @@ class ShelvingResourcesService:
             print(traceback.format_exc())
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail=ex.__str__())     
+                detail=ex.__str__())
+            
+    async def load_shelvings(self, shelvings: list[Shelving]) -> str:
+        try:
+            count_added_records = await self._shelving_repository.add(*shelvings)
+            return f"Succsessfully. Added {count_added_records} records."
+        except Exception as ex:
+            print(traceback.format_exc())
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=ex.__str__())

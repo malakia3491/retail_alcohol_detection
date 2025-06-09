@@ -1,14 +1,21 @@
 import traceback
 from typing import Optional
-from uuid import UUID
 from datetime import date, datetime
 from fastapi import APIRouter, Form, HTTPException, status
 from fastapi.responses import JSONResponse
 
-from Alc_Detection.Application.Requests.Models import Planogram, PlanogramComplianceReport, PlanogramOrder, PlanogramOrdersPageResponse, PlanogramOrdersResponse, PlanogramUsageReport, PlanogramsResponse, ProductsResponse, Realogram, RealogramsPageResponse, RealogramsResponse, ShelvingsResponse, StoresResponse
+from Alc_Detection.Application.Requests.LoadDataIntegration import AddDataRequest
+from Alc_Detection.Application.Requests.Reports import PlanogramComplianceReport, PlanogramUsageReport
 from Alc_Detection.Application.Requests.Requests import \
-(AddPermitionsRequest, AddPersonsRequest, AddPlanogramRequest, AddPostsRequest, AddProductsRequest, AddScheduleRequest, AddShelvingsRequest, AddShiftAssignment, AddShiftsRequest,
- AddStoresRequest, ApprovePlanogramRequest, DismissPersonRequest, UpdatePersonRequest)
+(AddPermitionsRequest, AddPersonsRequest, AddPlanogramRequest, AddPostsRequest, AddProductsRequest,
+ AddScheduleRequest, AddShelvingsRequest, AddShiftAssignment, AddShiftsRequest,
+ AddStoresRequest, ApprovePlanogramRequest, DismissPersonRequest)
+from Alc_Detection.Application.Requests.Responses import (               
+    PlanogramOrdersPageResponse, PlanogramOrdersResponse, PlanogramsResponse, ProductsResponse,
+    RealogramsPageResponse, RealogramsResponse, ShelvingsResponse,
+    StoresResponse
+)
+from Alc_Detection.Application.Requests.detection import PlanogramOrder, Planogram, Realogram
 from Alc_Detection.Application.StoreInformation.Services.StoreServiceFacade import StoreService
 
 class StoreController:
@@ -151,11 +158,26 @@ class StoreController:
                                   methods=["GET"],
                                   status_code=status.HTTP_200_OK,
                                   response_model=Realogram)
+        self.router.add_api_route("/integration/",
+                                  self.load_data,
+                                  methods=["POST"],
+                                  status_code=status.HTTP_200_OK)
     
+    async def load_data(self, request: AddDataRequest) -> dict:
+        try:      
+            message = await self.store_service.load_integration_data(request)
+            return {"message": message}         
+        except HTTPException as he:
+            raise he        
+        except Exception as e:
+            return JSONResponse(
+                content={"message": f"Internal error: {str(e)}"},
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)         
+                
     async def get_realogram(
         self, 
-        store_id: UUID,
-        realogram_id: UUID
+        store_id: str,
+        realogram_id: str
     ) -> Realogram:
         try:      
             response = await self.store_service.get_realogram(
@@ -172,10 +194,10 @@ class StoreController:
     
     async def get_page_realograms(
         self,
-        store_id: UUID,
+        store_id: str,
         date_start: datetime,
         date_end: datetime,
-        shelving_id: Optional[UUID] = None,
+        shelving_id: Optional[str] = None,
         page: int = 0,
         page_size: int = Form(10)
     ) -> RealogramsPageResponse:
@@ -259,7 +281,7 @@ class StoreController:
     
     async def get_last_realograms(
         self,
-        store_id: UUID
+        store_id: str
     ) -> RealogramsResponse:        
         try:
             response = await self.store_service.get_actual_realograms(store_id)
@@ -317,8 +339,8 @@ class StoreController:
 
     async def get_planogram(
         self,
-        order_id: UUID,
-        planogram_id: UUID
+        order_id: str,
+        planogram_id: str
     ) -> Planogram:
         try:
             response = await self.store_service.get_planogram(
@@ -388,7 +410,7 @@ class StoreController:
     
     async def get_planogram_order(
         self,
-        order_id: UUID
+        order_id: str
     ) -> PlanogramOrder:
         try:      
             response = await self.store_service.get_planogram_order(
@@ -423,8 +445,8 @@ class StoreController:
                         
     async def add_planogram_order(
         self,
-        person_id: UUID = Form(...),
-        shelving_ids: list[UUID] = Form(...),
+        person_id: str = Form(...),
+        shelving_ids: list[str] = Form(...),
         develop_date: date = Form(...),
         implementation_date: date = Form(...),   
     ) -> dict:
@@ -445,7 +467,7 @@ class StoreController:
 
     async def get_shelving(
         self,
-        shelving_id: UUID
+        shelving_id: str
     ) -> ShelvingsResponse:
         try:      
             response = await self.store_service.get_shelving(
@@ -596,8 +618,8 @@ class StoreController:
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)
             
     async def decline_order(self,
-                            person_id: UUID = Form(...), 
-                            order_id: UUID = Form(...),
+                            person_id: str = Form(...), 
+                            order_id: str = Form(...),
                                   
     ) -> dict:
         try:      

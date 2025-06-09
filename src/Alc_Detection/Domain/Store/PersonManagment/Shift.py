@@ -2,7 +2,7 @@ from uuid import UUID
 from datetime import datetime, time
 
 from Alc_Detection.Domain.Date.extensions import Period
-from Alc_Detection.Domain.RetailModel import RetailModel
+from Alc_Detection.Domain.IndexNotifiable import IndexNotifiable, indexed  
 from Alc_Detection.Domain.Shelf.DeviationManagment.Incident import Incident
 from Alc_Detection.Domain.Store.PersonManagment.Person import Person
 from Alc_Detection.Domain.Store.PersonManagment.Post import Post
@@ -11,7 +11,7 @@ from Alc_Detection.Domain.Store.PersonManagment.ShiftAssignment import ShiftAssi
 from Alc_Detection.Domain.Store.PersonManagment.StaffPosition import StaffPosition
 from Alc_Detection.Domain.Store.Shelving import Shelving
 
-class Shift(RetailModel):
+class Shift(IndexNotifiable):
     def __init__(
         self,
         name: str,
@@ -24,7 +24,8 @@ class Shift(RetailModel):
         retail_id: str=None,
         id: UUID=None,
     ):
-        super().__init__(retail_id=retail_id)                
+        super().__init__()
+        self._retail_id = retail_id             
         self.id = id
         self.name = name 
         self._work_time = work_time
@@ -37,6 +38,17 @@ class Shift(RetailModel):
         for s_p in staff_positions:
             staff_positions_dict[s_p.post] = s_p
         self._staff_positions = staff_positions_dict
+      
+    @indexed
+    @property
+    def retail_id(self) -> str:
+        return self._retail_id
+    
+    @retail_id.setter
+    def retail_id(self, value: str):
+        old = self._retail_id
+        self._retail_id = value
+        self._notify_index_changed('retail_id', old, value)    
     
     @property
     def work_time(self):
@@ -49,6 +61,10 @@ class Shift(RetailModel):
     @property
     def incidents(self):
         return self._incidents
+    
+    @property
+    def shift_assignments(self):
+        return self._on_shift_assignments
     
     @property    
     def actual_on_shift_assignment(self):

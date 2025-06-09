@@ -1,9 +1,9 @@
 from datetime import datetime
 
 from Alc_Detection.Domain.Date.extensions import Period
-from Alc_Detection.Domain.RetailModel import RetailModel
+from Alc_Detection.Domain.IndexNotifiable import IndexNotifiable, indexed  
 
-class Schedule(RetailModel):
+class Schedule(IndexNotifiable):
     def __init__(
         self,
         date_assignment: datetime,
@@ -13,12 +13,24 @@ class Schedule(RetailModel):
         retail_id: str=None,
         id: str=None
     ):
-        super().__init__(retail_id=retail_id)
+        super().__init__()
+        self._retail_id = retail_id
         self.id = id
         self._date_assignment = date_assignment
         self._holidayes = holidays
         self._period = Period(start=date_from,
                               end=date_to)
+
+    @indexed
+    @property
+    def retail_id(self) -> str:
+        return self._retail_id
+    
+    @retail_id.setter
+    def retail_id(self, value: str):
+        old = self._retail_id
+        self._retail_id = value
+        self._notify_index_changed('retail_id', old, value) 
 
     @property
     def days(self):

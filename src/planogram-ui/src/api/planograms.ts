@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 import {base_url} from '@/api/config';
-import type { Planogram, AddPlanogramRequest, ApprovePlanogramRequest, PlanogramsResponse, CalibrationBoxesResponse, CalibratePlanogramRequest, CalibrationBox } from '@/types'  
+import type { Planogram, AddPlanogramRequest, ApprovePlanogramRequest, PlanogramsResponse, CalibrationBoxesResponse, CalibrationBox } from '@/types'  
 
 const planogram_url = `${base_url}/retail/planograms`;
 const video_control_url = `${base_url}/video_control`

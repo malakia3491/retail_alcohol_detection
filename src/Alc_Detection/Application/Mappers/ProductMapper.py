@@ -45,6 +45,7 @@ class ProductMapper:
             raise ValueError(domain_model)
         
         return ProductModel(id=domain_model.id,
+                            retail_id=domain_model.retail_id,
                             name=domain_model.name)  
         
     def map_to_response_model(self,

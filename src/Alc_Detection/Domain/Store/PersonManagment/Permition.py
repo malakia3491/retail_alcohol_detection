@@ -1,15 +1,11 @@
 from uuid import UUID
 
-from Alc_Detection.Domain.RetailModel import RetailModel
-
-class Permition(RetailModel):
+class Permition():
     def __init__(
         self,
         name: str,
-        retail_id: str=None,
         id: UUID=None
     ):
-        super().__init__(retail_id=retail_id)
         self._name = name
         self.id = id
         

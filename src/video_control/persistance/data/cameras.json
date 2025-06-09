@@ -1,0 +1,26 @@
+[
+    {
+        "id": "rtsp://192.168.205.127:8554/h264_aac.sdp",
+        "ip": "192.168.205.127",
+        "url": "rtsp://192.168.205.127:8554/h264_aac.sdp",
+        "port": 8554,
+        "username": "",
+        "password": "",
+        "shelving": {
+            "id": "b890549c-cbfc-44c1-8bcf-920961dcc77a",
+            "name": "Стеллаж 1"
+        }
+    },
+    {
+        "id": "rtsp://192.168.205.168:8080/h264_aac.sdp",
+        "ip": "192.168.205.168",
+        "url": "rtsp://192.168.205.168:8080/h264_aac.sdp",
+        "port": 8080,
+        "username": "",
+        "password": "",
+        "shelving": {
+            "id": "5d23dead-9aea-4747-a230-fdc7dddbfa72",
+            "name": "Стеллаж 2"
+        }
+    }
+]

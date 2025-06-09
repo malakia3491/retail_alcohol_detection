@@ -1,8 +1,7 @@
 from uuid import UUID
+from typing import List
 from sqlalchemy import select, update, delete
-from sqlalchemy import bindparam
 from sqlalchemy.ext.asyncio import AsyncSession
-from typing import Union, List, Optional
 from sqlalchemy.exc import NoResultFound
 
 from Alc_Detection.Domain.Entities import Person
@@ -77,23 +76,11 @@ class PersonRepository:
             raise ObjectUpdateException(object_type=Person, object_id=obj_id)
         return len([obj])
     
+    async def find_by_retail_id(self, retail_id: str) -> Person | None:
+        return self._cache.get_by('retail_id', retail_id)       
+    
     async def find_by_telegram_id(self, telegram_id: str) -> Person | None:
-        persons: list[Person] = self._cache.get_all()
-        for person in persons:
-            if person.telegram_id == telegram_id:
-                return person
-        return None      
+        return self._cache.get_by('telegram_id', telegram_id)   
     
     async def find_by_email(self, email: str) -> Person | None:
-        persons: list[Person] = self._cache.get_all()
-        for person in persons:
-            if person.email == email:
-                return person
-        return None
-    
-    async def find_by_username(self, username: str) -> Person | None:
-        persons: list[Person] = self._cache.get_all()
-        for person in persons:
-            if person.name == username:
-                return person
-        return None
+        return self._cache.get_by('email', email)

@@ -1,9 +1,11 @@
-from datetime import datetime
 from typing import List, Optional
 from pydantic import BaseModel
 from uuid import UUID
 
-from Alc_Detection.Application.Requests.Models import Permition, Post, Product, ProductMatrix, Schedule, Shift, Store, Shelving, Person, CalibrationBox
+from Alc_Detection.Application.Requests.detection import CalibrationBox, ProductMatrix
+from Alc_Detection.Application.Requests.person_management import Permition, Person, Post, Schedule, Shift
+from Alc_Detection.Application.Requests.retail import Product, Shelving, Store
+
     
 class AddPlanogramRequest(BaseModel):
     order_id: UUID

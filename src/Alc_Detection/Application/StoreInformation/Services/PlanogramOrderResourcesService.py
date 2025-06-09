@@ -1,10 +1,9 @@
 import math
 import traceback
 from datetime import datetime
-from Alc_Detection.Application.ImageGeneration.ProductMatrixImageGenerator import ProductMatrixImageGenerator
 from fastapi import HTTPException, status
 
-from Alc_Detection.Application.Mappers.PlanogramMapper import PlanogramMapper
+from Alc_Detection.Application.Requests.Responses import PlanogramOrdersPageResponse, PlanogramOrdersResponse
 from Alc_Detection.Domain.Entities import *
 from Alc_Detection.Domain.Store.PlanogramOrder import PlanogramOrder
 from Alc_Detection.Application.Extentions.Utils import between
@@ -12,9 +11,6 @@ from Alc_Detection.Application.StoreInformation.Exceptions.Exceptions import (
      InvalidObjectId, PlanogramOrderIsNotResolved
 )
 from Alc_Detection.Application.Mappers.PlanogramOrderMapper import PlanogramOrderMapper
-from Alc_Detection.Application.Mappers.ProductMatrixMapper import ProductMatrixMapper
-from Alc_Detection.Application.Requests.Models import PlanogramOrdersPageResponse, PlanogramOrdersResponse
-from Alc_Detection.Persistance.Repositories.PostRepository import PostRepository
 from Alc_Detection.Persistance.Repositories.Repositories import *
 
 class PlanogramOrderResourcesService:

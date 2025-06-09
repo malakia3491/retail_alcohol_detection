@@ -1,13 +1,9 @@
+from Alc_Detection.Domain.Store.Store import Store
 from Alc_Detection.Application.Mappers.CalibrationMapper import CalibrationMapper
-from Alc_Detection.Application.Mappers.IncidentMapper import IncidentMapper
-from Alc_Detection.Application.Mappers.PersonMapper import PersonMapper
 from Alc_Detection.Application.Mappers.RealogramMapper import RealogramMapper
 from Alc_Detection.Application.Mappers.ShiftMapper import ShiftMapper
-from Alc_Detection.Domain.Shelf.Calibration import Calibration
-from Alc_Detection.Domain.Shelf.DeviationManagment.Incident import Incident
-from Alc_Detection.Domain.Store.Store import Store
+from Alc_Detection.Application.Requests.retail import Store as StoreApiModel
 from Alc_Detection.Persistance.Models.Models import Store as StoreModel 
-from Alc_Detection.Application.Requests.Models import Store as StoreApiModel
 
 class StoreMapper:    
     def __init__(self,
@@ -31,7 +27,10 @@ class StoreMapper:
         calibrations = [self._calibration_mapper.map_db_to_domain_model(calib)
                         for calib in db_model.calibrations]
         return Store(id=db_model.id,
+                     login=db_model.login,
+                     password_hash=db_model.password_hash,
                      is_office=db_model.is_office,
+                     retail_id=db_model.retail_id,
                      shifts=shifts,
                      realograms=realograms,
                      name=db_model.name,
@@ -41,7 +40,11 @@ class StoreMapper:
         if domain_model is None: return None
         if not isinstance(domain_model, Store):
             raise ValueError(domain_model)
-        return StoreModel(id=domain_model.id,
+        store_shifts = [self._shift_mapper.map_to_db_model(domain_model, shift) for shift in domain_model.shifts]         
+        return StoreModel(store_shifts=store_shifts,
+                          login=domain_model.login,
+                          password_hash=domain_model.password_hash,
+                          retail_id=domain_model.retail_id,
                           is_office=domain_model.is_office,
                           name=domain_model.name)
         

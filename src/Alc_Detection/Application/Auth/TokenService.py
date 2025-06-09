@@ -15,14 +15,13 @@ class TokenService:
         self._algorithm = algorithm
         self._access_token_expire = access_token_expire_minutes
 
-    def create_access_token(self, user: Person) -> str:
+    def create_access_token(self, obj) -> str:
         expires_delta = timedelta(minutes=self._access_token_expire)
         expire = datetime.now() + expires_delta
         
         token_data = {
-            "sub": str(user.id),
-            "name": user.name,
-            "is_store_worker": user.is_store_worker,
+            "sub": str(obj.id),
+            "name": obj.name,
             "exp": expire
         }
         return jwt.encode(

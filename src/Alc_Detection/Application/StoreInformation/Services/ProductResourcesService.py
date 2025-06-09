@@ -1,11 +1,11 @@
 import traceback
 from fastapi import HTTPException, status
 
+from Alc_Detection.Application.Requests.Responses import ProductsResponse
 from Alc_Detection.Application.RetailAPI.ProductsService import ProductsService
 from Alc_Detection.Domain.Entities import *
 from Alc_Detection.Application.Requests.Requests import (
     AddProductsRequest, Product as ProductModel)
-from Alc_Detection.Application.Requests.Models import  ProductsResponse
 from Alc_Detection.Persistance.Repositories.Repositories import *
 
 class ProductResourcesService:
@@ -54,6 +54,16 @@ class ProductResourcesService:
     async def add_products(self, request: AddProductsRequest) -> str:
         try:
             products = [Product(name=product.name) for product in request.products]
+            count_added_records = await self._product_repository.add(*products)
+            return f"Succsessfully. Added {count_added_records} records."
+        except Exception as ex:
+            print(traceback.format_exc())
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=ex.__str__())     
+            
+    async def load_products(self, products: list[Product]) -> str:
+        try:
             count_added_records = await self._product_repository.add(*products)
             return f"Succsessfully. Added {count_added_records} records."
         except Exception as ex:

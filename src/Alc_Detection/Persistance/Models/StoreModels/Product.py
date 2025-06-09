@@ -1,15 +1,19 @@
-from sqlalchemy import Column, String, Integer
+from sqlalchemy import Column, Sequence, String, Integer
 from sqlalchemy.orm import relationship
-from pgvector.sqlalchemy import Vector
 
-from Alc_Detection.Persistance.Models.BaseModel import BaseModel
 from Alc_Detection.Persistance.Models.BaseStoreModel import BaseStoreModel
  
 class Product(BaseStoreModel):
     __tablename__ = "products"
  
     name = Column(String)
-    label = Column(Integer, autoincrement=True, unique=True)
+    label = Column(
+        Integer,
+        Sequence("products_label_seq", start=1, increment=1),
+        server_default=Sequence("products_label_seq").next_value(),
+        unique=True,
+        nullable=False,
+    )
      
     planogram_products = relationship("PlanogramProduct", back_populates="product", lazy='selectin')
     images = relationship("ProductImage", back_populates="product", lazy='selectin')

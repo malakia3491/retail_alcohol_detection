@@ -1,10 +1,9 @@
 from datetime import datetime
 from uuid import UUID
 
-from Alc_Detection.Application.Requests.Models import Person
+from Alc_Detection.Application.Requests.person_management import Person
 from Alc_Detection.Domain.Date.extensions import Period
-from Alc_Detection.Domain.RetailModel import RetailModel
-from Alc_Detection.Domain.Shelf.DeviationManagment.Incident import Incident
+from Alc_Detection.Domain.IndexNotifiable import IndexNotifiable, indexed
 from Alc_Detection.Domain.Shelf.Calibration import Calibration
 from Alc_Detection.Domain.Shelf.Planogram import Planogram
 from Alc_Detection.Domain.Shelf.Realogram import Realogram
@@ -12,8 +11,10 @@ from Alc_Detection.Domain.Store.PersonManagment.Post import Post
 from Alc_Detection.Domain.Store.PersonManagment.Shift import Shift
 from Alc_Detection.Domain.Store.Shelving import Shelving
 
-class Store(RetailModel):
+class Store(IndexNotifiable):
     def __init__(self,
+                 login: str,
+                 password_hash: str,
                  name,
                  calibrations:list[Calibration]=[],
                  realograms:list[Realogram]=[],
@@ -21,13 +22,42 @@ class Store(RetailModel):
                  is_office:bool=False,
                  retail_id: str=None,
                  id=None):
-        super().__init__(retail_id=retail_id)
+        super().__init__()
         self.id = id
+        self._retail_id=retail_id
+        self._login = login
+        self._password_hash = password_hash
         self.name = name 
         self._is_office = is_office
         self._realograms = sorted(realograms, key=lambda r: r.create_date, reverse=True)
         self._shifts = shifts
         self._calibrations = calibrations
+
+    @indexed
+    @property
+    def login(self) -> str:
+        return self._login
+    
+    @login.setter
+    def login(self, value: str):
+        old = self._login
+        self._login = value
+        self._notify_index_changed('login', old, value)
+        
+    @property
+    def password_hash(self) -> str:
+        return self._password_hash
+
+    @indexed
+    @property
+    def retail_id(self) -> bool:
+        return self._retail_id
+    
+    @retail_id.setter
+    def retail_id(self, value: str):
+        old = self._retail_id
+        self._retail_id = value
+        self._notify_index_changed('retail_id', old, value)
 
     @property
     def is_office(self) -> bool:

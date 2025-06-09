@@ -14,6 +14,7 @@ export interface PlanogramComplianceReport {
 }
 
 export interface PlanogramUsageReportRow {
+    shelving_name: string;
     planogram_date: string;
     store_name: string;
     approval_date: string;       // ISO date string
@@ -25,5 +26,5 @@ export interface PlanogramUsageReportRow {
   }
   
   export interface PlanogramUsageReport {
-    rows: Record<string, Record<string, Record<string, PlanogramUsageReportRow>>>;
+    rows: Record<string, Record<string, PlanogramUsageReportRow>>;
   }

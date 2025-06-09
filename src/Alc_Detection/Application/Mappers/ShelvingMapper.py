@@ -8,6 +8,7 @@ class ShelvingMapper:
         if not isinstance(db_model, ShelvingModel):
             raise ValueError(db_model)
         return Shelving(id=db_model.id,
+                        retail_id=db_model.retail_id,
                         name=db_model.name,
                         shelves_count=db_model.shelves_count)
     
@@ -17,6 +18,7 @@ class ShelvingMapper:
             raise ValueError(domain_model)
         return ShelvingModel(id=domain_model.id,
                              name=domain_model.name,
+                             retail_id=domain_model.retail_id,
                              shelves_count=domain_model.shelves_count)
         
     def map_to_response_model(self,

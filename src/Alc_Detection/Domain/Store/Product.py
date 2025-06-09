@@ -1,18 +1,28 @@
 import numpy as np
 
-from Alc_Detection.Domain.NetworkModels.EmbeddingModel import EmbeddingNetwork
-from Alc_Detection.Domain.NetworkModels.Embedding import Embedding
+from Alc_Detection.Domain.IndexNotifiable import IndexNotifiable, indexed
 from Alc_Detection.Domain.NetworkModels.Image import Image
-from Alc_Detection.Domain.RetailModel import RetailModel
 
-class Product(RetailModel):
-    def __init__(self, images: list[Image]=[], name: str="Unknown", label: int=0, retail_id:str=None, id=None):
-        super().__init__(retail_id=retail_id)        
+class Product(IndexNotifiable):
+    def __init__(self, images: list[Image]=[], name: str="Unknown", label: int=0, retail_id:str=None, id=None): 
+        super().__init__()
         self.id = id
+        self._retail_id = retail_id
         self._name = name
         self._label = label
         self._images = images
         self._prototypes = self._compute_prototype_dict()
+
+    @indexed
+    @property
+    def retail_id(self) -> str:
+        return self._retail_id
+    
+    @retail_id.setter
+    def retail_id(self, value: str):
+        old = self._retail_id
+        self._retail_id = value
+        self._notify_index_changed('retail_id', old, value)
 
     @property 
     def name(self) -> str:

@@ -54,6 +54,9 @@ class StoreRepository:
          
     async def get_all(self) -> list[Store]:
         return self._cache.get_all()
+
+    async def get_by_login(self, login: str) -> Optional[Store]:
+        return self._cache.get_by('login', login)
     
     async def get_all_not_office(self) -> list[Store]:
         stores = self._cache.get_all()
@@ -125,6 +128,24 @@ class StoreRepository:
         for obj in objs:
             self._cache.put(obj.id, self._store_mapper.map_to_domain_model(obj))
         return len(objs)
+    
+    async def update(self, obj_id: UUID, data: dict) -> int:        
+        obj = self._cache.get(obj_id)
+        if obj:
+            try:
+                async with self.session_factory() as session:
+                    stmt = (
+                        update(StoreModel)
+                        .where(StoreModel.id == obj_id)
+                        .values(data)
+                    )                    
+                    await session.execute(stmt)
+                    await session.commit()
+            except Exception as ex:
+                raise ex
+        else:
+            raise ObjectUpdateException(object_type=Store, object_id=obj_id)
+        return len([obj])    
     
     async def add_calibration(self,
                               store: Store,
