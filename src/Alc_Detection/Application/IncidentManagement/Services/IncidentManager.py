@@ -48,7 +48,7 @@ class IncidentManager:
         now = datetime.now()  
         shift = store.actual_shift
         unresolved_incidents = shift.get_unresolved_incidents_by_shelving(realogram.shelving)         
-        if realogram.deviation_count < 0:
+        if realogram.deviation_count == 0:
             for incident in unresolved_incidents:
                 incident.resolve(now) 
         else:

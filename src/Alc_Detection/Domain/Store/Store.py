@@ -184,8 +184,6 @@ class Store(IndexNotifiable):
     def get_using_planograms_by_period(self, period: Period) -> dict[Planogram, tuple[tuple[Person, datetime], Period]]:
         calibrations_by_planogram = self._get_planogram_calibrations_dict() 
         
-        print("КОЛИЧЕСТВО ПЛАНОГРАММ", len(calibrations_by_planogram.keys()))
-        
         sorted_planograms = sorted(
             calibrations_by_planogram.keys(),
             key=lambda pg: min(c.create_date for c in calibrations_by_planogram[pg])

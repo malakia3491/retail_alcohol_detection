@@ -20,7 +20,6 @@ class StreamService:
         auth_service: AuthService,
         camera_service: CameraService,
         shelving_service: ShelvingService,
-        camera_repository: VideocameraRepository,
         requester: ApiRequester,
         interval: float = 1.0,
         capture_backend: int = cv2.CAP_ANY,
@@ -29,7 +28,6 @@ class StreamService:
         self._auth_service   = auth_service
         self._cam_svc        = camera_service
         self._shelf_svc      = shelving_service
-        self._repo           = camera_repository
         self._requester      = requester
 
         self._interval       = interval
@@ -75,7 +73,7 @@ class StreamService:
             cap.release()
         self._captures.clear()
 
-        cameras = await self._repo.get_all()
+        cameras = await self._cam_svc.get_all()
         for cam in cameras:
             cap = cv2.VideoCapture(cam.url, self._backend)
             if not cap.isOpened():

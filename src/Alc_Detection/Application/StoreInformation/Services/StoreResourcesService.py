@@ -134,7 +134,7 @@ class StoreResourcesService:
                     realograms = store.get_realograms_by_shelving_period(planogram.shelving, pg_period)
                     accords = [r.accordance for r in realograms]
                     avg_accord = sum(accords) / len(accords) if accords else 0.0
-                    shelving_name = planogram.shelving.name#
+                    shelving_name = planogram.shelving.name
                     realograms_count = len(realograms)
                     row = PlanogramUsageReportRow(
                         shelving_name=shelving_name,
